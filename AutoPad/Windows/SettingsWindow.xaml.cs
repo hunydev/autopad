@@ -86,6 +86,7 @@ public partial class SettingsWindow : Window
 
         MonitoringCheckBox.IsChecked = settings.IsMonitoringEnabled;
         FileMonitoringCheckBox.IsChecked = settings.IsFileMonitoringEnabled;
+        UpdateFileMonitoringEnabled();
         
         // 파일 크기 제한 선택
         foreach (WpfComboBoxItem item in FileSizeComboBox.Items)
@@ -106,6 +107,23 @@ public partial class SettingsWindow : Window
 
         // 언어 선택
         LanguageComboBox.SelectedIndex = settings.Language == "ko" ? 1 : 0;
+    }
+
+    private void MonitoringCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        UpdateFileMonitoringEnabled();
+    }
+
+    private void UpdateFileMonitoringEnabled()
+    {
+        bool enabled = MonitoringCheckBox.IsChecked ?? false;
+        FileMonitoringCheckBox.IsEnabled = enabled;
+        FileSizeComboBox.IsEnabled = enabled;
+        FileSizeLimitLabel.IsEnabled = enabled;
+        if (!enabled)
+        {
+            FileMonitoringCheckBox.IsChecked = false;
+        }
     }
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)

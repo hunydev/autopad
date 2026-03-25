@@ -186,6 +186,14 @@
                         Padding="14,8"
                         Margin="6,0,0,0"
                         Visibility="Collapsed"/>
+                
+                <Button x:Name="UrlOpenButton"
+                        Content="URL 열기"
+                        Style="{StaticResource EditButton}"
+                        Click="UrlOpenButton_Click"
+                        Padding="14,8"
+                        Margin="6,0,0,0"
+                        Visibility="Collapsed"/>
             </StackPanel>
         </Grid>
     </Border>

@@ -33,6 +33,7 @@ public static class Loc
     public static string BtnFileEdit => Get("File Edit", "파일 편집");
     public static string BtnFileOpen => Get("Open File", "파일 열기");
     public static string BtnFolderOpen => Get("Open Folder", "폴더 열기");
+    public static string BtnUrlOpen => Get("Open URL", "URL 열기");
     public static string TextFileFilter => Get("Text Files (*.txt)|*.txt|All Files (*.*)|*.*", "텍스트 파일 (*.txt)|*.txt|모든 파일 (*.*)|*.*");
     public static string ImageFileFilter => Get("PNG Image (*.png)|*.png|JPEG Image (*.jpg)|*.jpg|BMP Image (*.bmp)|*.bmp", "PNG 이미지 (*.png)|*.png|JPEG 이미지 (*.jpg)|*.jpg|BMP 이미지 (*.bmp)|*.bmp");
     public static string SaveFailed(string msg) => Get($"Save failed: {msg}", $"저장 실패: {msg}");

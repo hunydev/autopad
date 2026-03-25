@@ -17,6 +17,7 @@ public partial class ToastWindow : Window
     private readonly BitmapSource? _imageContent;
     private readonly string? _filePath;
     private readonly string? _detectedPath;
+    private readonly string? _detectedUrl;
     private readonly string? _htmlContent;
     private readonly ToastPosition _position;
 
@@ -36,6 +37,7 @@ public partial class ToastWindow : Window
         FileEditButton.Content = Loc.BtnFileEdit;
         FileOpenButton.Content = Loc.BtnFileOpen;
         FolderOpenButton.Content = Loc.BtnFolderOpen;
+        UrlOpenButton.Content = Loc.BtnUrlOpen;
 
         var byteSize = Encoding.UTF8.GetByteCount(text);
         var runeCount = text.EnumerateRunes().Count();
@@ -68,6 +70,14 @@ public partial class ToastWindow : Window
             catch
             {
                 // 유효하지 않은 경로 문자열이면 무시
+            }
+
+            // URL 감지
+            if (Uri.TryCreate(trimmed, UriKind.Absolute, out var uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+            {
+                _detectedUrl = trimmed;
+                UrlOpenButton.Visibility = Visibility.Visible;
             }
         }
 
@@ -271,6 +281,21 @@ public partial class ToastWindow : Window
         try
         {
             Process.Start(new ProcessStartInfo("explorer.exe", _detectedPath));
+        }
+        catch { }
+        
+        Close();
+    }
+
+    private void UrlOpenButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_detectedUrl == null) return;
+        
+        _autoCloseTimer.Stop();
+        
+        try
+        {
+            Process.Start(new ProcessStartInfo(_detectedUrl) { UseShellExecute = true });
         }
         catch { }
         

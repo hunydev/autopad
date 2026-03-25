@@ -230,7 +230,9 @@
             <CheckBox x:Name="MonitoringCheckBox" 
                       Content="클립보드 모니터링 활성화" 
                       Style="{StaticResource DarkCheckBox}"
-                      Margin="0,20,0,0"/>
+                      Margin="0,20,0,0"
+                      Checked="MonitoringCheckBox_Changed"
+                      Unchecked="MonitoringCheckBox_Changed"/>
             
             <CheckBox x:Name="FileMonitoringCheckBox" 
                       Content="파일 복사 모니터링 활성화" 

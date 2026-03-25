@@ -73,6 +73,10 @@ public partial class App : Application
             _settingsService.Save();
             OpenSettingsWindow();
         }
+        else if (!_settingsService.Settings.StartMinimized)
+        {
+            OpenSettingsWindow();
+        }
     }
 
     private void SetupNotifyIcon()
@@ -136,6 +140,12 @@ public partial class App : Application
             if (_monitoringItem != null)
             {
                 _monitoringItem.Checked = _settingsService.Settings.IsMonitoringEnabled;
+            }
+            // 파일 모니터링 설정 즉시 반영
+            if (_clipboardMonitor != null)
+            {
+                _clipboardMonitor.IsFileMonitoringEnabled = _settingsService.Settings.IsFileMonitoringEnabled;
+                _clipboardMonitor.MaxFileSizeBytes = _settingsService.Settings.FileMonitoringMaxSizeMB * 1024L * 1024L;
             }
         };
         _settingsWindow.Show();
