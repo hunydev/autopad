@@ -126,14 +126,3 @@ AutoPad/
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-- WPF (Windows Presentation Foundation)
-- C# 12
-
-## 시스템 요구사항
-
-- Windows 10 / 11
-- .NET 8.0 Runtime (또는 self-contained 배포 시 불필요)
-
-## 라이선스
-
-MIT License
