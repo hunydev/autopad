@@ -60,6 +60,12 @@ bld/
 # Application-specific
 **/appsettings.Development.json
 
+# MSIX signing
+*.pfx
+*.msix
+*.msixupload
+*.appxupload
+
 # VSCode extensions
 .history/
 

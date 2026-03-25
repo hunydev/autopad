@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using AutoPad.Models;
@@ -178,6 +179,68 @@ public partial class SettingsWindow : Window
     }
 
     private bool SetStartupWithWindows(bool enable, bool showMessage = false)
+    {
+        if (IsRunningAsMsix())
+            return SetStartupWithWindowsMsix(enable, showMessage);
+        else
+            return SetStartupWithWindowsRegistry(enable, showMessage);
+    }
+
+    private static bool IsRunningAsMsix()
+    {
+        try
+        {
+            int length = 0;
+            GetCurrentPackageFullName(ref length, null);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern int GetCurrentPackageFullName(ref int packageFullNameLength, char[]? packageFullName);
+
+    private bool SetStartupWithWindowsMsix(bool enable, bool showMessage)
+    {
+        try
+        {
+            var task = global::Windows.ApplicationModel.StartupTask.GetAsync("AutoPadStartup").GetAwaiter().GetResult();
+
+            if (enable)
+            {
+                var result = task.RequestEnableAsync().GetAwaiter().GetResult();
+                if (result == global::Windows.ApplicationModel.StartupTaskState.Enabled)
+                {
+                    if (showMessage)
+                        System.Windows.MessageBox.Show(Loc.MsgStartupRegistered, Loc.MsgSuccess, MessageBoxButton.OK, MessageBoxImage.Information);
+                    return true;
+                }
+                else if (result == global::Windows.ApplicationModel.StartupTaskState.DisabledByUser)
+                {
+                    System.Windows.MessageBox.Show(Loc.MsgStartupDisabledByUser, Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return false;
+                }
+                return false;
+            }
+            else
+            {
+                task.Disable();
+                if (showMessage)
+                    System.Windows.MessageBox.Show(Loc.MsgStartupUnregistered, Loc.MsgSuccess, MessageBoxButton.OK, MessageBoxImage.Information);
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(Loc.MsgStartupError(ex.Message), Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Error);
+            return false;
+        }
+    }
+
+    private bool SetStartupWithWindowsRegistry(bool enable, bool showMessage = false)
     {
         try
         {

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoPad — Clipboard Utility for Windows</title>
+  <meta name="description" content="A lightweight Windows clipboard monitor with toast previews and inline editing. Text, images, files. $0.99 on the Microsoft Store.">
+  <meta name="author" content="hunydev">
+  <meta name="theme-color" content="#111111">
+  <link rel="canonical" href="https://hunydev.github.io/autopad/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="AutoPad — Clipboard Utility for Windows">
+  <meta property="og:description" content="Monitor your clipboard, preview copies instantly, edit text and images on the spot. $0.99 on the Microsoft Store.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hunydev.github.io/autopad/">
+  <meta property="og:image" content="https://hunydev.github.io/autopad/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ko_KR">
+  <meta property="og:site_name" content="AutoPad">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AutoPad — Clipboard Utility for Windows">
+  <meta name="twitter:description" content="Monitor your clipboard, preview copies instantly, edit text and images on the spot.">
+  <meta name="twitter:image" content="https://hunydev.github.io/autopad/og-image.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "AutoPad",
+    "operatingSystem": "Windows 10, Windows 11",
+    "applicationCategory": "UtilitiesApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0.99",
+      "priceCurrency": "USD"
+    },
+    "description": "A lightweight Windows clipboard monitor with toast previews and inline editing.",
+    "url": "https://hunydev.github.io/autopad/",
+    "downloadUrl": "https://apps.microsoft.com/detail/autopad",
+    "author": {
+      "@type": "Person",
+      "name": "hunydev",
+      "url": "https://github.com/hunydev"
+    },
+    "license": "https://opensource.org/licenses/MIT"
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #111;
+      color: #d4d4d4;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+
+    .wrap { max-width: 720px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ─── header ─── */
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(17,17,17,.88);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #222;
+    }
+    header .wrap {
+      display: flex; justify-content: space-between; align-items: center;
+      height: 52px;
+    }
+    .logo { font-weight: 600; font-size: .95rem; color: #eee; text-decoration: none; letter-spacing: -.02em; }
+    header nav { display: flex; gap: 1.25rem; align-items: center; }
+    header nav a {
+      font-size: .82rem; color: #888; text-decoration: none;
+      transition: color .15s;
+    }
+    header nav a:hover { color: #ccc; }
+    .dl-link {
+      font-size: .78rem; font-weight: 500;
+      color: #111 !important; background: #e0e0e0;
+      padding: .3rem .75rem; border-radius: 4px;
+      transition: background .15s;
+    }
+    .dl-link:hover { background: #fff; }
+
+    /* ─── hero ─── */
+    .hero {
+      padding: 7rem 0 4rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .hero h1 {
+      font-size: 2.1rem; font-weight: 600; color: #f0f0f0;
+      letter-spacing: -.03em; line-height: 1.25; margin-bottom: 1.25rem;
+    }
+    .hero p {
+      font-size: 1rem; color: #888; max-width: 500px; margin-bottom: 2rem;
+    }
+    .hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+    .btn-store {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: #e0e0e0; color: #111; font-size: .82rem; font-weight: 500;
+      padding: .5rem 1rem; border-radius: 5px; text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-store:hover { background: #fff; }
+    .btn-store svg { width: 16px; height: 16px; opacity: .7; }
+    .btn-gh {
+      display: inline-flex; align-items: center; gap: .4rem;
+      color: #888; font-size: .82rem; text-decoration: none;
+      transition: color .15s;
+    }
+    .btn-gh:hover { color: #ccc; }
+    .btn-gh svg { width: 16px; height: 16px; }
+    .meta {
+      margin-top: 2.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap;
+      font-size: .75rem; color: #555;
+    }
+
+    /* ─── section ─── */
+    section { padding: 3.5rem 0; border-bottom: 1px solid #1a1a1a; }
+    section:last-of-type { border-bottom: none; }
+    .s-label {
+      font-size: .7rem; font-weight: 500; text-transform: uppercase;
+      letter-spacing: .08em; color: #666; margin-bottom: 1.5rem;
+    }
+
+    /* ─── features ─── */
+    .feat-list { display: flex; flex-direction: column; gap: 1.75rem; }
+    .feat {
+      display: grid; grid-template-columns: 2.5rem 1fr; gap: .75rem;
+      align-items: start;
+    }
+    .feat-num {
+      font-size: .72rem; font-weight: 500; color: #555;
+      width: 2.5rem; height: 2.5rem; border: 1px solid #2a2a2a;
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .feat h3 { font-size: .88rem; font-weight: 500; color: #ccc; margin-bottom: .2rem; }
+    .feat p { font-size: .82rem; color: #777; }
+
+    /* ─── how ─── */
+    .how-steps { display: flex; flex-direction: column; gap: 1.25rem; }
+    .how-step {
+      display: flex; gap: .75rem; align-items: baseline;
+    }
+    .how-n {
+      font-size: .72rem; font-weight: 500; color: #555;
+      min-width: 1.25rem;
+    }
+    .how-step p { font-size: .88rem; color: #999; }
+    .how-step strong { color: #ccc; font-weight: 500; }
+
+    /* ─── req ─── */
+    .req-list { font-size: .85rem; color: #888; }
+    .req-list li { margin-bottom: .4rem; list-style: none; }
+    .req-list li::before { content: '\2014'; margin-right: .5rem; color: #444; }
+
+    /* ─── cta ─── */
+    .cta { padding: 4rem 0 5rem; text-align: center; }
+    .cta p { color: #666; font-size: .88rem; margin-bottom: 1.5rem; }
+
+    /* ─── footer ─── */
+    footer {
+      border-top: 1px solid #1a1a1a;
+      padding: 1.5rem 0; text-align: center;
+      font-size: .72rem; color: #444;
+    }
+    footer a { color: #666; text-decoration: none; }
+    footer a:hover { color: #999; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.6rem; }
+      .hero { padding: 5rem 0 3rem; }
+      .feat { grid-template-columns: 1fr; }
+      .feat-num { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a href="#" class="logo">AutoPad</a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="https://github.com/hunydev/autopad">Source</a>
+      <a href="https://apps.microsoft.com/detail/autopad" class="dl-link">$0.99</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>A clipboard utility<br>that stays out of the way.</h1>
+    <p>AutoPad watches your clipboard, shows a quick preview when you copy something, and lets you edit it right there. Text, images, files.</p>
+    <div class="hero-actions">
+      <a href="https://apps.microsoft.com/detail/autopad" class="btn-store">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h11v11H0zm13 0h11v11H13zM0 13h11v11H0zm13 0h11v11H13z"/></svg>
+        $0.99 — Microsoft Store
+      </a>
+      <a href="https://github.com/hunydev/autopad" class="btn-gh">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.1-.4-.6-1.6.1-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.2.9 2.3v3.4c0 .3.2.7.8.6A12 12 0 0012 .3"/></svg>
+        Source on GitHub
+      </a>
+    </div>
+    <div class="meta">
+      <span>Windows 10 / 11</span>
+      <span>.NET 8</span>
+      <span>$0.99</span>
+      <span>MIT License</span>
+      <span>English / &#54620;&#44397;&#50612;</span>
+    </div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <div class="s-label">Features</div>
+    <div class="feat-list">
+      <div class="feat">
+        <div class="feat-num">01</div>
+        <div>
+          <h3>Clipboard monitoring</h3>
+          <p>Watches for text, image, and file copies in real-time. Runs from the system tray.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-num">02</div>
+        <div>
+          <h3>Toast previews</h3>
+          <p>Shows a small popup with content preview, size info, and action buttons. Position it anywhere on screen.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-num">03</div>
+        <div>
+          <h3>Inline text editing</h3>
+          <p>Open copied text in a built-in editor. Make changes and copy back with one click.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-num">04</div>
+        <div>
+          <h3>Image markup</h3>
+          <p>Draw, erase, select regions. Apply mosaic, fill, or erase on selections. Undo with Ctrl+Z.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-num">05</div>
+        <div>
+          <h3>HTML source</h3>
+          <p>When you copy formatted web content, view the raw HTML behind it.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-num">06</div>
+        <div>
+          <h3>Path detection</h3>
+          <p>Recognizes file and folder paths in copied text. Open them directly in Explorer.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-num">07</div>
+        <div>
+          <h3>File monitoring</h3>
+          <p>Detects file copies with thumbnail previews. Configurable size limit.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-num">08</div>
+        <div>
+          <h3>Encoding conversion</h3>
+          <p>Switch between UTF-8 and EUC-KR for text content.</p>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-num">09</div>
+        <div>
+          <h3>Dark theme</h3>
+          <p>Full dark UI including titlebar and scrollbars. It's the only theme, and it looks right.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="s-label">How it works</div>
+    <div class="how-steps">
+      <div class="how-step">
+        <span class="how-n">1.</span>
+        <p><strong>Copy something</strong> anywhere on your system. AutoPad is listening.</p>
+      </div>
+      <div class="how-step">
+        <span class="how-n">2.</span>
+        <p>A <strong>toast notification</strong> appears with a preview and quick actions.</p>
+      </div>
+      <div class="how-step">
+        <span class="how-n">3.</span>
+        <p>Hit <strong>Edit</strong> to modify, then <strong>Copy &amp; Close</strong> to write it back.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="requirements">
+  <div class="wrap">
+    <div class="s-label">Requirements</div>
+    <ul class="req-list">
+      <li>Windows 10 or 11, 64-bit</li>
+      <li>Self-contained build &mdash; no runtime needed</li>
+      <li>All data stays on your machine, no network calls</li>
+    </ul>
+  </div>
+</section>
+
+<div class="cta">
+  <div class="wrap">
+    <p>$0.99 on the Microsoft Store. Source code is MIT-licensed.</p>
+    <a href="https://apps.microsoft.com/detail/autopad" class="btn-store">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h11v11H0zm13 0h11v11H13zM0 13h11v11H0zm13 0h11v11H13z"/></svg>
+      Get from Microsoft Store
+    </a>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    &copy; 2026 <a href="https://github.com/hunydev">hunydev</a> &middot;
+    <a href="https://github.com/hunydev/autopad/blob/main/LICENSE">MIT</a>
+  </div>
+</footer>
+
+</body>
+</html>

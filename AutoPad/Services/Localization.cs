@@ -116,6 +116,7 @@ public static class Loc
     public static string MsgExePathFailed => Get("Cannot find executable path.", "실행 파일 경로를 찾을 수 없습니다.");
     public static string MsgStartupRegistered => Get("Auto-run on Windows startup has been registered.", "Windows 시작 시 자동 실행이 등록되었습니다.");
     public static string MsgStartupUnregistered => Get("Auto-run on Windows startup has been unregistered.", "Windows 시작 시 자동 실행이 해제되었습니다.");
+    public static string MsgStartupDisabledByUser => Get("Startup has been disabled by the user in Windows Settings.\nPlease enable it in Settings > Apps > Startup.", "Windows 설정에서 시작 프로그램이 비활성화되었습니다.\n설정 > 앱 > 시작에서 활성화해 주세요.");
     public static string MsgStartupError(string msg) => Get($"Error during startup registration:\n{msg}", $"시작 프로그램 등록 중 오류가 발생했습니다.\n{msg}");
     public static string MsgRestartRequired => Get("Language change will be applied after restarting the app.", "언어 변경은 앱을 다시 시작한 후 적용됩니다.");
 
