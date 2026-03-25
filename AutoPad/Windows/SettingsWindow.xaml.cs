@@ -186,13 +186,15 @@ public partial class SettingsWindow : Window
             return SetStartupWithWindowsRegistry(enable, showMessage);
     }
 
+    private const int APPMODEL_ERROR_NO_PACKAGE = 15700;
+
     private static bool IsRunningAsMsix()
     {
         try
         {
             int length = 0;
-            GetCurrentPackageFullName(ref length, null);
-            return true;
+            int result = GetCurrentPackageFullName(ref length, null);
+            return result != APPMODEL_ERROR_NO_PACKAGE;
         }
         catch
         {
