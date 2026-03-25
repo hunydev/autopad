@@ -66,6 +66,13 @@ public partial class App : Application
 
         // 클립보드 모니터링 시작
         SetupClipboardMonitor();
+
+        // 최초 실행 시 설정 창 열기
+        if (_settingsService.IsFirstRun)
+        {
+            _settingsService.Save();
+            OpenSettingsWindow();
+        }
     }
 
     private void SetupNotifyIcon()

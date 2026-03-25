@@ -18,6 +18,8 @@ public class SettingsService
 
     public AppSettings Settings => _settings;
 
+    public bool IsFirstRun { get; private set; }
+
     public void Load()
     {
         try
@@ -26,6 +28,10 @@ public class SettingsService
             {
                 var json = File.ReadAllText(SettingsPath);
                 _settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+            }
+            else
+            {
+                IsFirstRun = true;
             }
         }
         catch
