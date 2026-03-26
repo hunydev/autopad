@@ -9,7 +9,6 @@
   <meta name="theme-color" content="#111111">
   <link rel="canonical" href="https://hunydev.github.io/autopad/">
 
-  <!-- Open Graph -->
   <meta property="og:title" content="AutoPad — Clipboard Utility for Windows">
   <meta property="og:description" content="Monitor your clipboard, preview copies instantly, edit text and images on the spot. $0.99 on the Microsoft Store.">
   <meta property="og:type" content="website">
@@ -21,19 +20,16 @@
   <meta property="og:locale:alternate" content="ko_KR">
   <meta property="og:site_name" content="AutoPad">
 
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="AutoPad — Clipboard Utility for Windows">
   <meta name="twitter:description" content="Monitor your clipboard, preview copies instantly, edit text and images on the spot.">
   <meta name="twitter:image" content="https://hunydev.github.io/autopad/og-image.png">
 
-  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
-  <!-- Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -63,7 +59,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       font-family: 'Inter', -apple-system, sans-serif;
       background: #111;
@@ -72,10 +67,7 @@
       -webkit-font-smoothing: antialiased;
     }
     a { color: inherit; }
-
     .wrap { max-width: 720px; margin: 0 auto; padding: 0 1.5rem; }
-
-    /* ─── header ─── */
     header {
       position: sticky; top: 0; z-index: 10;
       background: rgba(17,17,17,.88);
@@ -87,7 +79,7 @@
       height: 52px;
     }
     .logo { font-weight: 600; font-size: .95rem; color: #eee; text-decoration: none; letter-spacing: -.02em; }
-    header nav { display: flex; gap: 1.25rem; align-items: center; }
+    header nav { display: flex; gap: 1rem; align-items: center; }
     header nav a {
       font-size: .82rem; color: #888; text-decoration: none;
       transition: color .15s;
@@ -100,28 +92,25 @@
       transition: background .15s;
     }
     .dl-link:hover { background: #fff; }
-
-    /* ─── hero ─── */
-    .hero {
-      padding: 7rem 0 4rem;
-      border-bottom: 1px solid #1a1a1a;
+    .lang-toggle {
+      border: 1px solid #2a2a2a;
+      background: #181818;
+      color: #a8a8a8;
+      font-size: .72rem;
+      padding: .24rem .5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
     }
+    .lang-toggle:hover { color: #d0d0d0; border-color: #404040; }
+
+    .hero { padding: 7rem 0 4rem; border-bottom: 1px solid #1a1a1a; }
     .hero h1 {
       font-size: 2.1rem; font-weight: 600; color: #f0f0f0;
       letter-spacing: -.03em; line-height: 1.25; margin-bottom: 1.25rem;
     }
-    .hero p {
-      font-size: 1rem; color: #888; max-width: 500px; margin-bottom: 2rem;
-    }
+    .hero p { font-size: 1rem; color: #888; max-width: 520px; margin-bottom: 2rem; }
     .hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
-    .btn-store {
-      display: inline-flex; align-items: center; gap: .5rem;
-      background: #e0e0e0; color: #111; font-size: .82rem; font-weight: 500;
-      padding: .5rem 1rem; border-radius: 5px; text-decoration: none;
-      transition: background .15s;
-    }
-    .btn-store:hover { background: #fff; }
-    .btn-store svg { width: 16px; height: 16px; opacity: .7; }
     .ms-store-badge { display: inline-flex; align-items: center; }
     .ms-store-badge img { display: block; }
     .badge-label { margin-left: .5rem; font-size: .78rem; color: #888; }
@@ -136,21 +125,14 @@
       margin-top: 2.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap;
       font-size: .75rem; color: #555;
     }
-
-    /* ─── section ─── */
     section { padding: 3.5rem 0; border-bottom: 1px solid #1a1a1a; }
     section:last-of-type { border-bottom: none; }
     .s-label {
       font-size: .7rem; font-weight: 500; text-transform: uppercase;
       letter-spacing: .08em; color: #666; margin-bottom: 1.5rem;
     }
-
-    /* ─── features ─── */
     .feat-list { display: flex; flex-direction: column; gap: 1.75rem; }
-    .feat {
-      display: grid; grid-template-columns: 2.5rem 1fr; gap: .75rem;
-      align-items: start;
-    }
+    .feat { display: grid; grid-template-columns: 2.5rem 1fr; gap: .75rem; align-items: start; }
     .feat-num {
       font-size: .72rem; font-weight: 500; color: #555;
       width: 2.5rem; height: 2.5rem; border: 1px solid #2a2a2a;
@@ -159,29 +141,16 @@
     }
     .feat h3 { font-size: .88rem; font-weight: 500; color: #ccc; margin-bottom: .2rem; }
     .feat p { font-size: .82rem; color: #777; }
-
-    /* ─── how ─── */
     .how-steps { display: flex; flex-direction: column; gap: 1.25rem; }
-    .how-step {
-      display: flex; gap: .75rem; align-items: baseline;
-    }
-    .how-n {
-      font-size: .72rem; font-weight: 500; color: #555;
-      min-width: 1.25rem;
-    }
+    .how-step { display: flex; gap: .75rem; align-items: baseline; }
+    .how-n { font-size: .72rem; font-weight: 500; color: #555; min-width: 1.25rem; }
     .how-step p { font-size: .88rem; color: #999; }
     .how-step strong { color: #ccc; font-weight: 500; }
-
-    /* ─── req ─── */
     .req-list { font-size: .85rem; color: #888; }
     .req-list li { margin-bottom: .4rem; list-style: none; }
     .req-list li::before { content: '\2014'; margin-right: .5rem; color: #444; }
-
-    /* ─── cta ─── */
     .cta { padding: 4rem 0 5rem; text-align: center; }
     .cta p { color: #666; font-size: .88rem; margin-bottom: 1.5rem; }
-
-    /* ─── footer ─── */
     footer {
       border-top: 1px solid #1a1a1a;
       padding: 1.5rem 0; text-align: center;
@@ -204,26 +173,27 @@
   <div class="wrap">
     <a href="#" class="logo">AutoPad</a>
     <nav>
-      <a href="#features">Features</a>
-      <a href="https://github.com/hunydev/autopad">Source</a>
-      <a href="https://apps.microsoft.com/detail/9p63pjdml1x0?hl=ko-kr&gl=KR&ocid=pdpshare" class="dl-link">$0.99</a>
+      <a href="#features" data-i18n="navFeatures">Features</a>
+      <a href="https://github.com/hunydev/autopad" data-i18n="navSource">Source</a>
+      <a id="priceLink" href="https://apps.microsoft.com/detail/9p63pjdml1x0?hl=en-us&gl=US&ocid=pdpshare" class="dl-link">$0.99</a>
+      <button type="button" id="langToggle" class="lang-toggle">Korean</button>
     </nav>
   </div>
 </header>
 
 <div class="hero">
   <div class="wrap">
-    <h1>A clipboard utility<br>that stays out of the way.</h1>
-    <p>AutoPad watches your clipboard, shows a quick preview when you copy something, and lets you edit it right there. Text, images, files.</p>
+    <h1 data-i18n="heroTitle">A clipboard utility<br>that stays out of the way.</h1>
+    <p data-i18n="heroDesc">AutoPad watches your clipboard, shows a quick preview when you copy something, and lets you edit it right there. Text, images, files.</p>
     <div class="hero-actions">
-      <a href="https://get.microsoft.com/installer/download/9p63pjdml1x0?referrer=appbadge" target="_self" class="ms-store-badge">
-        <img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="AutoPad 다운로드"/>
-        <span class="badge-label">다운로드</span>
+      <a id="storeInstallLink" href="https://get.microsoft.com/installer/download/9p63pjdml1x0?referrer=appbadge" target="_self" class="ms-store-badge">
+        <img id="storeBadgeImage" src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="Download AutoPad">
+        <span class="badge-label" data-i18n="downloadLabel">Download</span>
       </a>
-      <a href="https://apps.microsoft.com/detail/9p63pjdml1x0?hl=ko-kr&gl=KR&ocid=pdpshare" class="btn-gh">스토어에서 보기</a>
+      <a id="storeDetailsLink" href="https://apps.microsoft.com/detail/9p63pjdml1x0?hl=en-us&gl=US&ocid=pdpshare" class="btn-gh" data-i18n="storeView">View in Store</a>
       <a href="https://github.com/hunydev/autopad" class="btn-gh">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.1-.4-.6-1.6.1-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 016 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.2.9 2.3v3.4c0 .3.2.7.8.6A12 12 0 0012 .3"/></svg>
-        Source on GitHub
+        <span data-i18n="githubSource">Source on GitHub</span>
       </a>
     </div>
     <div class="meta">
@@ -231,130 +201,188 @@
       <span>.NET 8</span>
       <span>$0.99</span>
       <span>MIT License</span>
-      <span>English / &#54620;&#44397;&#50612;</span>
+      <span data-i18n="metaLang">English / Korean</span>
     </div>
   </div>
 </div>
 
 <section id="features">
   <div class="wrap">
-    <div class="s-label">Features</div>
+    <div class="s-label" data-i18n="featuresLabel">Features</div>
     <div class="feat-list">
-      <div class="feat">
-        <div class="feat-num">01</div>
-        <div>
-          <h3>Clipboard monitoring</h3>
-          <p>Watches for text, image, and file copies in real-time. Runs from the system tray.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-num">02</div>
-        <div>
-          <h3>Toast previews</h3>
-          <p>Shows a small popup with content preview, size info, and action buttons. Position it anywhere on screen.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-num">03</div>
-        <div>
-          <h3>Inline text editing</h3>
-          <p>Open copied text in a built-in editor. Make changes and copy back with one click.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-num">04</div>
-        <div>
-          <h3>Image markup</h3>
-          <p>Draw, erase, select regions. Apply mosaic, fill, or erase on selections. Undo with Ctrl+Z.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-num">05</div>
-        <div>
-          <h3>HTML source</h3>
-          <p>When you copy formatted web content, view the raw HTML behind it.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-num">06</div>
-        <div>
-          <h3>Path detection</h3>
-          <p>Recognizes file and folder paths in copied text. Open them directly in Explorer.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-num">07</div>
-        <div>
-          <h3>File monitoring</h3>
-          <p>Detects file copies with thumbnail previews. Configurable size limit.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-num">08</div>
-        <div>
-          <h3>Encoding conversion</h3>
-          <p>Switch between UTF-8 and EUC-KR for text content.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-num">09</div>
-        <div>
-          <h3>Dark theme</h3>
-          <p>Full dark UI including titlebar and scrollbars. It's the only theme, and it looks right.</p>
-        </div>
-      </div>
+      <div class="feat"><div class="feat-num">01</div><div><h3 data-i18n="f1t">Clipboard monitoring</h3><p data-i18n="f1d">Watches for text, image, and file copies in real-time. Runs from the system tray.</p></div></div>
+      <div class="feat"><div class="feat-num">02</div><div><h3 data-i18n="f2t">Toast previews</h3><p data-i18n="f2d">Shows a small popup with content preview, size info, and action buttons. Position it anywhere on screen.</p></div></div>
+      <div class="feat"><div class="feat-num">03</div><div><h3 data-i18n="f3t">Inline text editing</h3><p data-i18n="f3d">Open copied text in a built-in editor. Make changes and copy back with one click.</p></div></div>
+      <div class="feat"><div class="feat-num">04</div><div><h3 data-i18n="f4t">Image markup</h3><p data-i18n="f4d">Draw, erase, select regions. Apply mosaic, fill, or erase on selections. Undo with Ctrl+Z.</p></div></div>
+      <div class="feat"><div class="feat-num">05</div><div><h3 data-i18n="f5t">HTML source</h3><p data-i18n="f5d">When you copy formatted web content, view the raw HTML behind it.</p></div></div>
+      <div class="feat"><div class="feat-num">06</div><div><h3 data-i18n="f6t">Path detection</h3><p data-i18n="f6d">Recognizes file and folder paths in copied text. Open them directly in Explorer.</p></div></div>
+      <div class="feat"><div class="feat-num">07</div><div><h3 data-i18n="f7t">File monitoring</h3><p data-i18n="f7d">Detects file copies with thumbnail previews. Configurable size limit.</p></div></div>
+      <div class="feat"><div class="feat-num">08</div><div><h3 data-i18n="f8t">Encoding conversion</h3><p data-i18n="f8d">Switch between UTF-8 and EUC-KR for text content.</p></div></div>
+      <div class="feat"><div class="feat-num">09</div><div><h3 data-i18n="f9t">Dark theme</h3><p data-i18n="f9d">Full dark UI including titlebar and scrollbars. It's the only theme, and it looks right.</p></div></div>
     </div>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <div class="s-label">How it works</div>
+    <div class="s-label" data-i18n="howLabel">How it works</div>
     <div class="how-steps">
-      <div class="how-step">
-        <span class="how-n">1.</span>
-        <p><strong>Copy something</strong> anywhere on your system. AutoPad is listening.</p>
-      </div>
-      <div class="how-step">
-        <span class="how-n">2.</span>
-        <p>A <strong>toast notification</strong> appears with a preview and quick actions.</p>
-      </div>
-      <div class="how-step">
-        <span class="how-n">3.</span>
-        <p>Hit <strong>Edit</strong> to modify, then <strong>Copy &amp; Close</strong> to write it back.</p>
-      </div>
+      <div class="how-step"><span class="how-n">1.</span><p data-i18n="step1"><strong>Copy something</strong> anywhere on your system. AutoPad is listening.</p></div>
+      <div class="how-step"><span class="how-n">2.</span><p data-i18n="step2">A <strong>toast notification</strong> appears with a preview and quick actions.</p></div>
+      <div class="how-step"><span class="how-n">3.</span><p data-i18n="step3">Hit <strong>Edit</strong> to modify, then <strong>Copy &amp; Close</strong> to write it back.</p></div>
     </div>
   </div>
 </section>
 
 <section id="requirements">
   <div class="wrap">
-    <div class="s-label">Requirements</div>
+    <div class="s-label" data-i18n="requirementsLabel">Requirements</div>
     <ul class="req-list">
-      <li>Windows 10 or 11, 64-bit</li>
-      <li>Self-contained build &mdash; no runtime needed</li>
-      <li>All data stays on your machine, no network calls</li>
+      <li data-i18n="req1">Windows 10 or 11, 64-bit</li>
+      <li data-i18n="req2">Self-contained build &mdash; no runtime needed</li>
+      <li data-i18n="req3">All data stays on your machine, no network calls</li>
     </ul>
   </div>
 </section>
 
 <div class="cta">
   <div class="wrap">
-    <p>$0.99 on the Microsoft Store. Source code is MIT-licensed.</p>
-    <a href="https://get.microsoft.com/installer/download/9p63pjdml1x0?referrer=appbadge" target="_self" class="ms-store-badge">
-      <img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="AutoPad 다운로드"/>
-      <span class="badge-label">다운로드</span>
+    <p data-i18n="ctaText">$0.99 on the Microsoft Store. Source code is MIT-licensed.</p>
+    <a id="storeInstallLinkBottom" href="https://get.microsoft.com/installer/download/9p63pjdml1x0?referrer=appbadge" target="_self" class="ms-store-badge">
+      <img id="storeBadgeImageBottom" src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="Download AutoPad">
+      <span class="badge-label" data-i18n="downloadLabel">Download</span>
     </a>
-    <p><a href="https://apps.microsoft.com/detail/9p63pjdml1x0?hl=ko-kr&gl=KR&ocid=pdpshare" class="btn-gh">스토어 페이지에서 상세 보기</a></p>
+    <p><a id="storeDetailsLinkBottom" href="https://apps.microsoft.com/detail/9p63pjdml1x0?hl=en-us&gl=US&ocid=pdpshare" class="btn-gh" data-i18n="storeDetail">See details on the Store page</a></p>
   </div>
 </div>
 
 <footer>
   <div class="wrap">
     &copy; 2026 <a href="https://github.com/hunydev">hunydev</a> &middot;
-    <a href="https://github.com/hunydev/autopad/blob/main/LICENSE">MIT</a>
+    <a href="https://github.com/hunydev/autopad/blob/main/LICENSE">MIT</a> &middot;
+    <a href="privacy/" data-i18n="privacyLink">Privacy Policy</a>
   </div>
 </footer>
+
+<script>
+  (function () {
+    const KEY = 'autopad_lang';
+    const supported = ['en', 'ko'];
+    const i18n = {
+      en: {
+        pageTitle: 'AutoPad — Clipboard Utility for Windows',
+        pageDescription: 'A lightweight Windows clipboard monitor with toast previews and inline editing. Text, images, files. $0.99 on the Microsoft Store.',
+        ogTitle: 'AutoPad — Clipboard Utility for Windows',
+        ogDescription: 'Monitor your clipboard, preview copies instantly, edit text and images on the spot. $0.99 on the Microsoft Store.',
+        twitterTitle: 'AutoPad — Clipboard Utility for Windows',
+        twitterDescription: 'Monitor your clipboard, preview copies instantly, edit text and images on the spot.',
+        navFeatures: 'Features', navSource: 'Source', heroTitle: 'A clipboard utility<br>that stays out of the way.',
+        heroDesc: 'AutoPad watches your clipboard, shows a quick preview when you copy something, and lets you edit it right there. Text, images, files.',
+        downloadLabel: 'Download', storeView: 'View in Store', githubSource: 'Source on GitHub',
+        metaLang: 'English / Korean', featuresLabel: 'Features', howLabel: 'How it works', requirementsLabel: 'Requirements',
+        f1t: 'Clipboard monitoring', f1d: 'Watches for text, image, and file copies in real-time. Runs from the system tray.',
+        f2t: 'Toast previews', f2d: 'Shows a small popup with content preview, size info, and action buttons. Position it anywhere on screen.',
+        f3t: 'Inline text editing', f3d: 'Open copied text in a built-in editor. Make changes and copy back with one click.',
+        f4t: 'Image markup', f4d: 'Draw, erase, select regions. Apply mosaic, fill, or erase on selections. Undo with Ctrl+Z.',
+        f5t: 'HTML source', f5d: 'When you copy formatted web content, view the raw HTML behind it.',
+        f6t: 'Path detection', f6d: 'Recognizes file and folder paths in copied text. Open them directly in Explorer.',
+        f7t: 'File monitoring', f7d: 'Detects file copies with thumbnail previews. Configurable size limit.',
+        f8t: 'Encoding conversion', f8d: 'Switch between UTF-8 and EUC-KR for text content.',
+        f9t: 'Dark theme', f9d: "Full dark UI including titlebar and scrollbars. It's the only theme, and it looks right.",
+        step1: '<strong>Copy something</strong> anywhere on your system. AutoPad is listening.',
+        step2: 'A <strong>toast notification</strong> appears with a preview and quick actions.',
+        step3: 'Hit <strong>Edit</strong> to modify, then <strong>Copy &amp; Close</strong> to write it back.',
+        req1: 'Windows 10 or 11, 64-bit', req2: 'Self-contained build &mdash; no runtime needed', req3: 'All data stays on your machine, no network calls',
+        ctaText: '$0.99 on the Microsoft Store. Source code is MIT-licensed.',
+        storeDetail: 'See details on the Store page', privacyLink: 'Privacy Policy', toggleLabel: 'Korean',
+        storeUrl: 'https://apps.microsoft.com/detail/9p63pjdml1x0?hl=en-us&gl=US&ocid=pdpshare',
+        badgeAlt: 'Download AutoPad', badgeImage: 'https://get.microsoft.com/images/en-us%20dark.svg'
+      },
+      ko: {
+        pageTitle: 'AutoPad — Windows 클립보드 유틸리티',
+        pageDescription: '토스트 미리보기와 즉시 편집을 제공하는 가벼운 Windows 클립보드 모니터입니다. 텍스트, 이미지, 파일을 지원합니다. Microsoft Store $0.99.',
+        ogTitle: 'AutoPad — Windows 클립보드 유틸리티',
+        ogDescription: '클립보드를 감시하고 복사 직후 미리보기와 편집 기능을 제공합니다. Microsoft Store $0.99.',
+        twitterTitle: 'AutoPad — Windows 클립보드 유틸리티',
+        twitterDescription: '클립보드 미리보기, 텍스트/이미지 편집, 파일 감지 기능을 제공합니다.',
+        navFeatures: '기능', navSource: '소스', heroTitle: '방해하지 않는<br>클립보드 유틸리티.',
+        heroDesc: 'AutoPad는 클립보드를 감시하고 복사 직후 미리보기를 보여주며, 그 자리에서 바로 편집할 수 있게 해줍니다. 텍스트, 이미지, 파일을 지원합니다.',
+        downloadLabel: '다운로드', storeView: '스토어에서 보기', githubSource: 'GitHub 소스',
+        metaLang: '영어 / 한국어', featuresLabel: '기능', howLabel: '사용 방법', requirementsLabel: '요구 사항',
+        f1t: '클립보드 모니터링', f1d: '텍스트, 이미지, 파일 복사를 실시간으로 감지합니다. 시스템 트레이에서 실행됩니다.',
+        f2t: '토스트 미리보기', f2d: '내용 미리보기, 크기 정보, 빠른 동작 버튼이 포함된 작은 팝업을 표시합니다. 화면 위치를 자유롭게 지정할 수 있습니다.',
+        f3t: '텍스트 즉시 편집', f3d: '복사한 텍스트를 내장 편집기에서 열어 수정하고 한 번에 다시 복사할 수 있습니다.',
+        f4t: '이미지 마크업', f4d: '그리기, 지우기, 영역 선택을 지원합니다. 선택 영역에 모자이크, 채우기, 삭제를 적용할 수 있고 Ctrl+Z로 되돌릴 수 있습니다.',
+        f5t: 'HTML 소스 확인', f5d: '서식이 있는 웹 콘텐츠를 복사했을 때 원본 HTML을 확인할 수 있습니다.',
+        f6t: '경로 인식', f6d: '복사한 텍스트에서 파일/폴더 경로를 인식하고 Explorer에서 바로 열 수 있습니다.',
+        f7t: '파일 모니터링', f7d: '파일 복사를 감지하고 썸네일 미리보기를 제공합니다. 크기 제한을 설정할 수 있습니다.',
+        f8t: '인코딩 변환', f8d: '텍스트 인코딩을 UTF-8과 EUC-KR 사이에서 전환할 수 있습니다.',
+        f9t: '다크 테마', f9d: '타이틀바와 스크롤바를 포함한 전체 다크 UI를 제공합니다. 기본 테마 하나만 지원합니다.',
+        step1: '시스템 어디에서든 <strong>복사</strong>하면 AutoPad가 감지합니다.',
+        step2: '<strong>토스트 알림</strong>에 미리보기와 빠른 동작 버튼이 표시됩니다.',
+        step3: '<strong>Edit</strong>로 수정한 뒤 <strong>Copy &amp; Close</strong>를 누르면 클립보드에 다시 반영됩니다.',
+        req1: 'Windows 10 또는 11, 64비트', req2: 'Self-contained 빌드 — 별도 런타임 불필요', req3: '모든 데이터는 기기 내부에서만 처리되며 네트워크 호출이 없습니다',
+        ctaText: 'Microsoft Store에서 $0.99에 구매할 수 있으며 소스 코드는 MIT 라이선스입니다.',
+        storeDetail: '스토어 페이지에서 상세 보기', privacyLink: '개인정보 처리방침', toggleLabel: 'English',
+        storeUrl: 'https://apps.microsoft.com/detail/9p63pjdml1x0?hl=ko-kr&gl=KR&ocid=pdpshare',
+        badgeAlt: 'AutoPad 다운로드', badgeImage: 'https://get.microsoft.com/images/ko-kr%20dark.svg'
+      }
+    };
+
+    const els = document.querySelectorAll('[data-i18n]');
+    const langToggle = document.getElementById('langToggle');
+    const priceLink = document.getElementById('priceLink');
+    const storeDetailsLink = document.getElementById('storeDetailsLink');
+    const storeDetailsLinkBottom = document.getElementById('storeDetailsLinkBottom');
+    const badgeTop = document.getElementById('storeBadgeImage');
+    const badgeBottom = document.getElementById('storeBadgeImageBottom');
+
+    function setLang(lang) {
+      const t = i18n[lang] || i18n.en;
+      document.documentElement.lang = lang;
+      document.title = t.pageTitle;
+      document.querySelector('meta[name="description"]').setAttribute('content', t.pageDescription);
+      document.querySelector('meta[property="og:title"]').setAttribute('content', t.ogTitle);
+      document.querySelector('meta[property="og:description"]').setAttribute('content', t.ogDescription);
+      document.querySelector('meta[name="twitter:title"]').setAttribute('content', t.twitterTitle);
+      document.querySelector('meta[name="twitter:description"]').setAttribute('content', t.twitterDescription);
+
+      els.forEach((el) => {
+        const key = el.dataset.i18n;
+        if (!(key in t)) return;
+        el.innerHTML = t[key];
+      });
+
+      priceLink.href = t.storeUrl;
+      storeDetailsLink.href = t.storeUrl;
+      storeDetailsLinkBottom.href = t.storeUrl;
+      badgeTop.src = t.badgeImage;
+      badgeBottom.src = t.badgeImage;
+      badgeTop.alt = t.badgeAlt;
+      badgeBottom.alt = t.badgeAlt;
+      langToggle.textContent = t.toggleLabel;
+      try {
+        localStorage.setItem(KEY, lang);
+      } catch (e) {
+        // Ignore storage errors and continue without persisting language
+      }
+    }
+
+    let saved;
+    try {
+      saved = localStorage.getItem(KEY);
+    } catch (e) {
+      saved = null;
+    }
+    const initial = supported.includes(saved) ? saved : 'en';
+    setLang(initial);
+
+    langToggle.addEventListener('click', () => {
+      const current = document.documentElement.lang === 'ko' ? 'ko' : 'en';
+      setLang(current === 'en' ? 'ko' : 'en');
+    });
+  })();
+</script>
 
 </body>
 </html>
