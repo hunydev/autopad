@@ -189,13 +189,22 @@
       document.querySelector('meta[name="description"]').setAttribute('content', t.pageDescription);
       nodes.forEach((node) => {
         const key = node.dataset.i18n;
-        if (t[key]) node.innerHTML = t[key];
+        if (key in t) node.innerHTML = t[key];
       });
       langToggle.textContent = t.toggleLabel;
-      localStorage.setItem(KEY, lang);
+      try {
+        localStorage.setItem(KEY, lang);
+      } catch (e) {
+        // Ignore storage errors and continue without persisting language
+      }
     }
 
-    const saved = localStorage.getItem(KEY);
+    let saved;
+    try {
+      saved = localStorage.getItem(KEY);
+    } catch (e) {
+      saved = null;
+    }
     const initial = saved === 'ko' ? 'ko' : 'en';
     setLang(initial);
 
