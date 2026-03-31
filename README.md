@@ -11,6 +11,12 @@ A lightweight Windows clipboard monitoring utility that detects copied content i
 - **HTML Source Viewer** — View raw HTML source when web content is copied with formatting
 - **Path Detection** — Detects file/folder paths in clipboard text with quick-open buttons
 - **File Monitoring** — Detects file copy operations with thumbnail preview for images
+- **Image Monitoring** — Toggle image clipboard monitoring independently
+- **Clipboard History** — Browse, search, copy, or edit past clipboard entries
+- **Toast Opacity** — Adjust toast transparency (10–100%) with hover-to-full-opacity
+- **Compact Mode** — Minimal toast with buttons only, smaller padding
+- **Live Settings Preview** — Notification tab shows a live preview toast for position, compact, and opacity changes
+- **Settings Pause** — Clipboard monitoring pauses while settings window is open
 - **Encoding Support** — UTF-8 and EUC-KR encoding conversion for text files
 - **Multi-language** — English (default) and Korean UI
 - **System Tray** — Runs quietly in the background with tray icon
@@ -80,8 +86,12 @@ Double-click the tray icon or right-click → Settings:
 | Language | English / 한국어 |
 | Toast Position | Bottom/Top Center, Bottom/Top Left/Right |
 | Notification Duration | 3, 5, 10, or 15 seconds |
+| Toast Opacity | 10–100% with hover-to-full-opacity |
+| Compact Mode | Show buttons only in toast |
 | Clipboard Monitoring | Enable/disable monitoring |
+| Image Monitoring | Enable/disable image copy detection |
 | File Copy Monitoring | Enable/disable with size limit (1–100 MB) |
+| Clipboard History | Enable/disable with configurable max items (20–200) |
 | Auto-start | Register with Windows startup |
 | Start Minimized | Launch directly to system tray |
 
@@ -110,17 +120,20 @@ AutoPad/
 ├── App.xaml.cs              # Application entry, global clipboard event routing
 ├── Services/
 │   ├── ClipboardMonitor.cs  # Win32 clipboard change listener
+│   ├── ClipboardHistoryService.cs  # Clipboard history persistence
 │   ├── Localization.cs      # Multi-language string resources (en/ko)
 │   ├── SettingsService.cs   # JSON settings persistence
 │   ├── ThemeHelper.cs       # Dark mode DWM API
 │   └── IconHelper.cs        # Dynamic app icon generation
 ├── Models/
-│   └── AppSettings.cs       # Settings data model
+│   ├── AppSettings.cs       # Settings data model
+│   └── ClipboardHistoryItem.cs  # History item model
 └── Windows/
     ├── ToastWindow.xaml      # Toast notification popup
     ├── EditWindow.xaml       # Text/image editing window
+    ├── HistoryWindow.xaml    # Clipboard history browser
     ├── HtmlViewerWindow.xaml # HTML source viewer (read-only)
-    └── SettingsWindow.xaml   # Settings dialog
+    └── SettingsWindow.xaml   # Settings dialog (tabbed: General/Notification/History)
 ```
 
 ## License

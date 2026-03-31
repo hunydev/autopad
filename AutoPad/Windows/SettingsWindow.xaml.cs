@@ -13,6 +13,7 @@ namespace AutoPad.Windows;
 public partial class SettingsWindow : Window
 {
     private readonly SettingsService _settingsService;
+    private ToastWindow? _previewToast;
     private const string StartupRegistryKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
     private const string AppName = "AutoPad";
 
@@ -36,15 +37,35 @@ public partial class SettingsWindow : Window
     {
         Title = Loc.SettingsTitle;
         SettingsHeaderText.Text = Loc.SettingsHeader;
+        
+        // 탭
+        TabGeneral.Content = Loc.SettingsTabGeneral;
+        TabNotification.Content = Loc.SettingsTabNotification;
+        TabHistory.Content = Loc.SettingsTabHistory;
+        
+        // 일반 탭
         LanguageLabelText.Text = Loc.SettingsLanguage;
-        PositionLabelText.Text = Loc.SettingsToastPosition;
-        DurationLabelText.Text = Loc.SettingsDuration;
         MonitoringCheckBox.Content = Loc.SettingsEnableMonitoring;
+        ImageMonitoringCheckBox.Content = Loc.SettingsEnableImageMonitoring;
         FileMonitoringCheckBox.Content = Loc.SettingsEnableFileMonitoring;
         FileSizeLimitLabel.Text = Loc.SettingsFileSizeLimit;
         StartWithWindowsCheckBox.Content = Loc.SettingsAutoStart;
         StartMinimizedCheckBox.Content = Loc.SettingsStartMinimized;
+        
+        // 알림 탭
+        PositionLabelText.Text = Loc.SettingsToastPosition;
+        DurationLabelText.Text = Loc.SettingsDuration;
+        CompactModeCheckBox.Content = Loc.SettingsCompactMode;
+        OpacityLabelText.Text = Loc.SettingsToastOpacity;
+        
+        // 히스토리 탭
+        HistoryCheckBox.Content = Loc.SettingsEnableHistory;
+        HistorySizeLabel.Text = Loc.SettingsHistorySize;
+        
         SettingsSaveButton.Content = Loc.SettingsBtnSave;
+
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+        VersionText.Text = $"v{version!.Major}.{version.Minor}.{version.Build}.{version.Revision}";
 
         // 콤보박스 아이템은 Tag 기반 선택이므로 Content만 변경
         PosBottom.Content = Loc.PosBottomCenter;
@@ -85,8 +106,9 @@ public partial class SettingsWindow : Window
         }
 
         MonitoringCheckBox.IsChecked = settings.IsMonitoringEnabled;
+        ImageMonitoringCheckBox.IsChecked = settings.IsImageMonitoringEnabled;
         FileMonitoringCheckBox.IsChecked = settings.IsFileMonitoringEnabled;
-        UpdateFileMonitoringEnabled();
+        UpdateMonitoringChildren();
         
         // 파일 크기 제한 선택
         foreach (WpfComboBoxItem item in FileSizeComboBox.Items)
@@ -104,6 +126,24 @@ public partial class SettingsWindow : Window
         
         StartWithWindowsCheckBox.IsChecked = settings.StartWithWindows;
         StartMinimizedCheckBox.IsChecked = settings.StartMinimized;
+        CompactModeCheckBox.IsChecked = settings.IsCompactMode;
+        OpacitySlider.Value = settings.ToastOpacityPercent;
+        OpacityValueText.Text = $"{settings.ToastOpacityPercent}%";
+        HistoryCheckBox.IsChecked = settings.IsHistoryEnabled;
+
+        // 히스토리 개수 선택
+        foreach (WpfComboBoxItem item in HistorySizeComboBox.Items)
+        {
+            if (item.Tag?.ToString() == settings.HistoryMaxItems.ToString())
+            {
+                HistorySizeComboBox.SelectedItem = item;
+                break;
+            }
+        }
+        if (HistorySizeComboBox.SelectedItem == null && HistorySizeComboBox.Items.Count > 0)
+        {
+            HistorySizeComboBox.SelectedIndex = 1; // 기본값 50
+        }
 
         // 언어 선택
         LanguageComboBox.SelectedIndex = settings.Language == "ko" ? 1 : 0;
@@ -111,19 +151,80 @@ public partial class SettingsWindow : Window
 
     private void MonitoringCheckBox_Changed(object sender, RoutedEventArgs e)
     {
-        UpdateFileMonitoringEnabled();
+        UpdateMonitoringChildren();
     }
 
-    private void UpdateFileMonitoringEnabled()
+    private void UpdateMonitoringChildren()
     {
         bool enabled = MonitoringCheckBox.IsChecked ?? false;
+        ImageMonitoringCheckBox.IsEnabled = enabled;
         FileMonitoringCheckBox.IsEnabled = enabled;
         FileSizeComboBox.IsEnabled = enabled;
         FileSizeLimitLabel.IsEnabled = enabled;
-        if (!enabled)
+    }
+
+    private void Tab_Checked(object sender, RoutedEventArgs e)
+    {
+        if (PanelGeneral == null) return; // InitializeComponent not done yet
+        PanelGeneral.Visibility = TabGeneral.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        PanelNotification.Visibility = TabNotification.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        PanelHistory.Visibility = TabHistory.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
+        if (TabNotification.IsChecked == true)
+            ShowPreviewToast();
+        else
+            ClosePreviewToast();
+    }
+
+    private void OpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (OpacityValueText != null)
+            OpacityValueText.Text = $"{(int)e.NewValue}%";
+        _previewToast?.UpdatePreviewOpacity(e.NewValue / 100.0);
+    }
+
+    private void PositionComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (TabNotification?.IsChecked == true)
+            ShowPreviewToast();
+    }
+
+    private void NotificationSettingChanged(object sender, RoutedEventArgs e)
+    {
+        if (TabNotification?.IsChecked == true)
+            ShowPreviewToast();
+    }
+
+    private void ShowPreviewToast()
+    {
+        ClosePreviewToast();
+
+        var position = ToastPosition.BottomRight;
+        if (PositionComboBox.SelectedItem is WpfComboBoxItem posItem
+            && Enum.TryParse<ToastPosition>(posItem.Tag?.ToString(), out var pos))
         {
-            FileMonitoringCheckBox.IsChecked = false;
+            position = pos;
         }
+
+        var isCompact = CompactModeCheckBox.IsChecked ?? false;
+        var opacityPercent = (int)OpacitySlider.Value;
+
+        _previewToast = new ToastWindow(position, isCompact, opacityPercent);
+        _previewToast.Show();
+    }
+
+    private void ClosePreviewToast()
+    {
+        if (_previewToast != null)
+        {
+            _previewToast.Close();
+            _previewToast = null;
+        }
+    }
+
+    private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        ClosePreviewToast();
     }
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -149,6 +250,7 @@ public partial class SettingsWindow : Window
         }
 
         settings.IsMonitoringEnabled = MonitoringCheckBox.IsChecked ?? true;
+        settings.IsImageMonitoringEnabled = ImageMonitoringCheckBox.IsChecked ?? true;
         settings.IsFileMonitoringEnabled = FileMonitoringCheckBox.IsChecked ?? true;
         
         // 파일 크기 제한 저장
@@ -166,6 +268,18 @@ public partial class SettingsWindow : Window
         bool langChanged = oldLang != settings.Language;
         
         settings.StartMinimized = StartMinimizedCheckBox.IsChecked ?? true;
+        settings.IsCompactMode = CompactModeCheckBox.IsChecked ?? false;
+        settings.ToastOpacityPercent = (int)OpacitySlider.Value;
+        settings.IsHistoryEnabled = HistoryCheckBox.IsChecked ?? true;
+
+        // 히스토리 개수 저장
+        if (HistorySizeComboBox.SelectedItem is WpfComboBoxItem histItem)
+        {
+            if (int.TryParse(histItem.Tag?.ToString(), out var maxItems))
+            {
+                settings.HistoryMaxItems = maxItems;
+            }
+        }
         
         // Windows 시작 프로그램 등록/해제 (변경된 경우에만)
         bool wantStartup = StartWithWindowsCheckBox.IsChecked ?? false;

@@ -1,5 +1,8 @@
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Ink;
@@ -43,7 +46,7 @@ public partial class EditWindow : Window
     // Undo 지원: 이미지 상태 스택
     private readonly Stack<BitmapSource> _imageUndoStack = new();
 
-    public static bool SuppressClipboardMonitor { get; private set; }
+    public static bool SuppressClipboardMonitor { get; internal set; }
 
     private void ApplyLocalization()
     {
@@ -70,6 +73,14 @@ public partial class EditWindow : Window
         FitToggleText.Text = Loc.FitToWindow;
         SaveButton.Content = Loc.BtnSaveFile;
         CopyAllButton.Content = Loc.BtnCopyClose;
+        RemoveLinesButton.Content = Loc.BtnRemoveLines;
+        RemoveBlankLinesButton.Content = Loc.BtnRemoveBlankLines;
+        RemoveAllLinesButton.Content = Loc.BtnRemoveAllLines;
+        ReplaceWhitespaceButton.Content = Loc.BtnReplaceWhitespace;
+        TrimButton.Content = Loc.BtnTrim;
+        MaskNumbersButton.Content = Loc.BtnMaskNumbers;
+        UpperCaseButton.Content = Loc.BtnUpperCase;
+        LowerCaseButton.Content = Loc.BtnLowerCase;
     }
 
     public EditWindow(string text, bool isDarkMode = true)
@@ -84,10 +95,16 @@ public partial class EditWindow : Window
         ContentTextBox.Text = text;
         ContentTextBox.Focus();
         ContentTextBox.SelectAll();
+        ContentTextBox.SelectionChanged += ContentTextBox_SelectionChanged;
+        ContentTextBox.PreviewMouseMove += ContentTextBox_PreviewMouseMove;
+        ContentTextBox.MouseLeave += ContentTextBox_MouseLeave;
         
+        TextToolbar.Visibility = Visibility.Visible;
+        
+        var lineCount = text.Split('\n').Length;
         var byteSize = Encoding.UTF8.GetByteCount(text);
         var runeCount = text.EnumerateRunes().Count();
-        Title = Loc.EditTitle(runeCount, FormatSize(byteSize));
+        Title = Loc.EditTitle(runeCount, FormatSize(byteSize), lineCount);
         
         CopySelectedButton.Content = Loc.BtnCopySelection;
         SaveButton.Visibility = Visibility.Visible;
@@ -181,6 +198,10 @@ public partial class EditWindow : Window
             _isImageMode = false;
             LoadFileAsText(filePath);
             EncodingToolbar.Visibility = Visibility.Visible;
+            TextToolbar.Visibility = Visibility.Visible;
+            ContentTextBox.SelectionChanged += ContentTextBox_SelectionChanged;
+            ContentTextBox.PreviewMouseMove += ContentTextBox_PreviewMouseMove;
+            ContentTextBox.MouseLeave += ContentTextBox_MouseLeave;
         }
         
         SaveButton.Visibility = Visibility.Visible;
@@ -346,6 +367,12 @@ public partial class EditWindow : Window
     {
         if (e.Key == Key.Escape)
         {
+            if (UrlPopup.IsOpen)
+            {
+                HideUrlPopup();
+                e.Handled = true;
+                return;
+            }
             if (_hasSelection)
             {
                 ClearSelection();
@@ -1117,7 +1144,7 @@ public partial class EditWindow : Window
                 };
 
                 encoder.Frames.Add(BitmapFrame.Create(finalImage));
-                using var stream = File.OpenWrite(dialog.FileName);
+                using var stream = File.Create(dialog.FileName);
                 encoder.Save(stream);
                 ShowStatus(Loc.StatusSaved);
             }
@@ -1126,5 +1153,336 @@ public partial class EditWindow : Window
                 System.Windows.MessageBox.Show(Loc.SaveFailed(ex.Message), Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+    }
+
+    // ── 텍스트 선택 정보 표시 ──
+
+    private void ContentTextBox_SelectionChanged(object? sender, RoutedEventArgs e)
+    {
+        var selected = ContentTextBox.SelectedText;
+        if (string.IsNullOrEmpty(selected))
+        {
+            // 전체 텍스트의 메타 정보 표시
+            var fullText = ContentTextBox.Text;
+            var runeCount = fullText.EnumerateRunes().Count();
+            var byteSize = Encoding.UTF8.GetByteCount(fullText);
+            var lineCount = fullText.Split('\n').Length;
+            SelectionInfoText.Text = Loc.SelectionInfoFull(runeCount, FormatSize(byteSize), lineCount);
+        }
+        else
+        {
+            var runeCount = selected.EnumerateRunes().Count();
+            var byteSize = Encoding.UTF8.GetByteCount(selected);
+            var lineCount = selected.Split('\n').Length;
+            SelectionInfoText.Text = Loc.SelectionInfoSelected(runeCount, FormatSize(byteSize), lineCount);
+        }
+    }
+
+    // ── 라인 제거 ──
+
+    private void RemoveLinesButton_Click(object sender, RoutedEventArgs e)
+    {
+        RemoveLinesPopup.IsOpen = !RemoveLinesPopup.IsOpen;
+    }
+
+    private void RemoveBlankLinesButton_Click(object sender, RoutedEventArgs e)
+    {
+        RemoveLinesPopup.IsOpen = false;
+
+        if (ContentTextBox.SelectionLength > 0)
+        {
+            var selected = ContentTextBox.SelectedText;
+            var lines = selected.Split('\n');
+            var filtered = lines.Where(l => l.TrimEnd('\r').Trim().Length > 0);
+            var result = string.Join("\n", filtered);
+            ReplaceSelection(result);
+        }
+        else
+        {
+            var lines = ContentTextBox.Text.Split('\n');
+            var filtered = lines.Where(l => l.TrimEnd('\r').Trim().Length > 0);
+            ContentTextBox.Text = string.Join("\n", filtered);
+        }
+        UpdateTitleMeta();
+        ShowStatus(Loc.StatusBlankLinesRemoved);
+    }
+
+    private void RemoveAllLinesButton_Click(object sender, RoutedEventArgs e)
+    {
+        RemoveLinesPopup.IsOpen = false;
+
+        if (ContentTextBox.SelectionLength > 0)
+        {
+            var selected = ContentTextBox.SelectedText;
+            var result = selected.Replace("\r\n", "").Replace("\r", "").Replace("\n", "");
+            ReplaceSelection(result);
+        }
+        else
+        {
+            ContentTextBox.Text = ContentTextBox.Text.Replace("\r\n", "").Replace("\r", "").Replace("\n", "");
+        }
+        UpdateTitleMeta();
+        ShowStatus(Loc.StatusAllLinesRemoved);
+    }
+
+    // ── 특수공백 제거 ──
+
+    private void ReplaceWhitespaceButton_Click(object sender, RoutedEventArgs e)
+    {
+        RemoveLinesPopup.IsOpen = false;
+        var text = ContentTextBox.SelectionLength > 0 ? ContentTextBox.SelectedText : ContentTextBox.Text;
+
+        var counts = new Dictionary<string, int>();
+        var sb = new StringBuilder();
+        foreach (var rune in text.EnumerateRunes())
+        {
+            var cat = Rune.GetUnicodeCategory(rune);
+            bool isNonAsciiWhitespace = (cat == UnicodeCategory.SpaceSeparator
+                || cat == UnicodeCategory.LineSeparator
+                || cat == UnicodeCategory.ParagraphSeparator
+                || rune.Value == 0x00A0  // NBSP
+                || rune.Value == 0x200B  // Zero-width space
+                || rune.Value == 0xFEFF  // BOM/ZWNBSP
+                || rune.Value == 0x200C  // ZWNJ
+                || rune.Value == 0x200D  // ZWJ
+                || rune.Value == 0x2060  // Word Joiner
+                ) && rune.Value > 127;
+            if (isNonAsciiWhitespace)
+            {
+                var name = $"U+{rune.Value:X4}";
+                counts[name] = counts.GetValueOrDefault(name) + 1;
+            }
+            else
+            {
+                sb.Append(rune.ToString());
+            }
+        }
+
+        if (counts.Count == 0)
+        {
+            ShowStatus(Loc.StatusNoWhitespaceFound);
+            return;
+        }
+
+        if (ContentTextBox.SelectionLength > 0)
+            ReplaceSelection(sb.ToString());
+        else
+            ContentTextBox.Text = sb.ToString();
+
+        var detail = string.Join("\n", counts.Select(kv => $"  {kv.Key}: {kv.Value}"));
+        var total = counts.Values.Sum();
+        System.Windows.MessageBox.Show(
+            Loc.MsgWhitespaceReplaced(total, detail),
+            "AutoPad", MessageBoxButton.OK, MessageBoxImage.Information);
+        UpdateTitleMeta();
+    }
+
+    // ── TRIM ──
+
+    private void TrimButton_Click(object sender, RoutedEventArgs e)
+    {
+        RemoveLinesPopup.IsOpen = false;
+
+        if (ContentTextBox.SelectionLength > 0)
+        {
+            var selected = ContentTextBox.SelectedText;
+            var lines = selected.Split('\n');
+            var trimmed = lines.Select(l =>
+            {
+                var cr = l.EndsWith('\r') ? "\r" : "";
+                return l.TrimEnd('\r').Trim() + cr;
+            });
+            ReplaceSelection(string.Join("\n", trimmed));
+        }
+        else
+        {
+            var lines = ContentTextBox.Text.Split('\n');
+            var trimmed = lines.Select(l =>
+            {
+                var cr = l.EndsWith('\r') ? "\r" : "";
+                return l.TrimEnd('\r').Trim() + cr;
+            });
+            ContentTextBox.Text = string.Join("\n", trimmed);
+        }
+        UpdateTitleMeta();
+        ShowStatus(Loc.StatusTrimmed);
+    }
+
+    // ── 숫자 마스킹 ──
+
+    private void MaskNumbersButton_Click(object sender, RoutedEventArgs e)
+    {
+        RemoveLinesPopup.IsOpen = false;
+        var text = ContentTextBox.SelectionLength > 0 ? ContentTextBox.SelectedText : ContentTextBox.Text;
+
+        int count = 0;
+        var result = Regex.Replace(text, @"\d", m => { count++; return "*"; });
+
+        if (count == 0)
+        {
+            ShowStatus(Loc.StatusNoNumbersFound);
+            return;
+        }
+
+        if (ContentTextBox.SelectionLength > 0)
+            ReplaceSelection(result);
+        else
+            ContentTextBox.Text = result;
+
+        System.Windows.MessageBox.Show(
+            Loc.MsgNumbersMasked(count),
+            "AutoPad", MessageBoxButton.OK, MessageBoxImage.Information);
+        UpdateTitleMeta();
+    }
+
+    // ── 대문자 / 소문자 ──
+
+    private void UpperCaseButton_Click(object sender, RoutedEventArgs e)
+    {
+        RemoveLinesPopup.IsOpen = false;
+        if (ContentTextBox.SelectionLength > 0)
+            ReplaceSelection(ContentTextBox.SelectedText.ToUpperInvariant());
+        else
+            ContentTextBox.Text = ContentTextBox.Text.ToUpperInvariant();
+        UpdateTitleMeta();
+        ShowStatus(Loc.StatusUpperCased);
+    }
+
+    private void LowerCaseButton_Click(object sender, RoutedEventArgs e)
+    {
+        RemoveLinesPopup.IsOpen = false;
+        if (ContentTextBox.SelectionLength > 0)
+            ReplaceSelection(ContentTextBox.SelectedText.ToLowerInvariant());
+        else
+            ContentTextBox.Text = ContentTextBox.Text.ToLowerInvariant();
+        UpdateTitleMeta();
+        ShowStatus(Loc.StatusLowerCased);
+    }
+
+    // ── URL 호버 버튼 ──
+
+    private static readonly Regex UrlRegex = new(@"https?://[^\s<>""')\]]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private string? _hoveredUrl;
+    private string? _shownForUrl;
+    private System.Windows.Threading.DispatcherTimer? _urlHideTimer;
+
+    private void CancelUrlHideTimer()
+    {
+        if (_urlHideTimer != null)
+        {
+            _urlHideTimer.Stop();
+            _urlHideTimer = null;
+        }
+    }
+
+    private void HideUrlPopup()
+    {
+        CancelUrlHideTimer();
+        UrlPopup.IsOpen = false;
+        _hoveredUrl = null;
+        _shownForUrl = null;
+    }
+
+    private void ScheduleUrlHide()
+    {
+        CancelUrlHideTimer();
+        _urlHideTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(150)
+        };
+        _urlHideTimer.Tick += (s, e) =>
+        {
+            CancelUrlHideTimer();
+            if (!UrlOpenButton.IsMouseOver)
+                HideUrlPopup();
+        };
+        _urlHideTimer.Start();
+    }
+
+    private void ContentTextBox_PreviewMouseMove(object sender, WpfMouseEventArgs e)
+    {
+        var pos = e.GetPosition(ContentTextBox);
+        var index = ContentTextBox.GetCharacterIndexFromPoint(pos, true);
+        if (index >= 0)
+        {
+            var url = GetUrlAtIndex(ContentTextBox.Text, index);
+            if (url != null)
+            {
+                _hoveredUrl = url;
+                CancelUrlHideTimer();
+
+                if (!UrlPopup.IsOpen || _shownForUrl != url)
+                {
+                    var rect = ContentTextBox.GetRectFromCharacterIndex(index);
+                    UrlPopup.HorizontalOffset = rect.Left;
+                    UrlPopup.VerticalOffset = rect.Bottom + 2;
+                    UrlPopup.IsOpen = true;
+                    _shownForUrl = url;
+                }
+                return;
+            }
+        }
+        if (UrlPopup.IsOpen && !UrlOpenButton.IsMouseOver)
+            ScheduleUrlHide();
+    }
+
+    private void ContentTextBox_MouseLeave(object sender, WpfMouseEventArgs e)
+    {
+        if (UrlPopup.IsOpen && !UrlOpenButton.IsMouseOver)
+            ScheduleUrlHide();
+    }
+
+    private void UrlOpenButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_hoveredUrl != null)
+        {
+            try { Process.Start(new ProcessStartInfo(_hoveredUrl) { UseShellExecute = true }); }
+            catch { }
+        }
+        HideUrlPopup();
+    }
+
+    private void UrlOpenButton_MouseLeave(object sender, WpfMouseEventArgs e)
+    {
+        ScheduleUrlHide();
+    }
+
+    private string? _urlCacheText;
+    private MatchCollection? _urlCacheMatches;
+
+    private string? GetUrlAtIndex(string text, int index)
+    {
+        if (_urlCacheText != text)
+        {
+            _urlCacheText = text;
+            _urlCacheMatches = UrlRegex.Matches(text);
+        }
+        foreach (Match match in _urlCacheMatches!)
+        {
+            if (index >= match.Index && index < match.Index + match.Length)
+                return match.Value;
+        }
+        return null;
+    }
+
+    // ── 유틸리티 ──
+
+    private void ReplaceSelection(string newText)
+    {
+        var start = ContentTextBox.SelectionStart;
+        var length = ContentTextBox.SelectionLength;
+        var full = ContentTextBox.Text;
+        ContentTextBox.Text = full[..start] + newText + full[(start + length)..];
+        ContentTextBox.SelectionStart = start;
+        ContentTextBox.SelectionLength = newText.Length;
+    }
+
+    private void UpdateTitleMeta()
+    {
+        var text = ContentTextBox.Text;
+        var runeCount = text.EnumerateRunes().Count();
+        var byteSize = Encoding.UTF8.GetByteCount(text);
+        var lineCount = text.Split('\n').Length;
+        Title = Loc.EditTitle(runeCount, FormatSize(byteSize), lineCount);
     }
 }

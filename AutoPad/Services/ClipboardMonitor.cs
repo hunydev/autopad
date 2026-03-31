@@ -25,6 +25,11 @@ public class ClipboardMonitor : IDisposable
     /// </summary>
     public bool IsFileMonitoringEnabled { get; set; } = true;
 
+    /// <summary>
+    /// 이미지 모니터링 활성화 여부
+    /// </summary>
+    public bool IsImageMonitoringEnabled { get; set; } = true;
+
     public event EventHandler<ClipboardChangedEventArgs>? ClipboardChanged;
 
     [DllImport("user32.dll", SetLastError = true)]
@@ -66,19 +71,25 @@ public class ClipboardMonitor : IDisposable
 
     private void OnClipboardChanged()
     {
+        // 이미지를 먼저 확인 (이미지 복사 시 텍스트도 포함될 수 있음)
         try
         {
-            // 이미지를 먼저 확인 (이미지 복사 시 텍스트도 포함될 수 있음)
-            if (WpfClipboard.ContainsImage())
+            if (IsImageMonitoringEnabled && WpfClipboard.ContainsImage())
             {
                 var image = WpfClipboard.GetImage();
                 if (image != null)
                 {
+                    if (image.CanFreeze && !image.IsFrozen)
+                        image.Freeze();
                     ClipboardChanged?.Invoke(this, new ClipboardChangedEventArgs(ClipboardContentType.Image, image));
                     return;
                 }
             }
-            
+        }
+        catch { /* 클립보드 이미지 접근 실패 시 텍스트로 진행 */ }
+
+        try
+        {
             if (WpfClipboard.ContainsText())
             {
                 var text = WpfClipboard.GetText();
@@ -106,7 +117,11 @@ public class ClipboardMonitor : IDisposable
                     return;
                 }
             }
-            
+        }
+        catch { /* 클립보드 텍스트 접근 실패 시 파일로 진행 */ }
+
+        try
+        {
             if (IsFileMonitoringEnabled && WpfClipboard.ContainsFileDropList())
             {
                 var files = WpfClipboard.GetFileDropList();
@@ -125,10 +140,7 @@ public class ClipboardMonitor : IDisposable
                 }
             }
         }
-        catch
-        {
-            // 클립보드 접근 실패 시 무시
-        }
+        catch { /* 클립보드 파일 접근 실패 시 무시 */ }
     }
 
     public void Dispose()

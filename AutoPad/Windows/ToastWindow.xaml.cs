@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using AutoPad.Models;
@@ -20,12 +21,14 @@ public partial class ToastWindow : Window
     private readonly string? _detectedUrl;
     private readonly string? _htmlContent;
     private readonly ToastPosition _position;
+    private double _targetOpacity;
 
     public event EventHandler? EditRequested;
 
-    public ToastWindow(string text, ToastPosition position, int durationSeconds, string? htmlContent = null)
+    public ToastWindow(string text, ToastPosition position, int durationSeconds, bool isCompact = false, string? htmlContent = null)
     {
         InitializeComponent();
+        _targetOpacity = (App.SettingsService?.Settings.ToastOpacityPercent ?? 100) / 100.0;
         _textContent = text;
         _htmlContent = htmlContent;
         _position = position;
@@ -41,9 +44,10 @@ public partial class ToastWindow : Window
 
         var byteSize = Encoding.UTF8.GetByteCount(text);
         var runeCount = text.EnumerateRunes().Count();
-        var sizeText = FormatFileSize(byteSize);
+        var lineCount = text.Split('\n').Length;
+        var sizeText = Loc.FormatSize(byteSize);
         
-        MessageText.Text = Loc.TextCopied(runeCount, sizeText);
+        MessageText.Text = Loc.TextCopied(runeCount, sizeText, lineCount);
         
         var preview = text.Length > 60 ? text[..60] + "..." : text;
         preview = preview.Replace("\r", "").Replace("\n", " ");
@@ -87,17 +91,20 @@ public partial class ToastWindow : Window
             HtmlViewButton.Visibility = Visibility.Visible;
         }
 
+        if (isCompact) ApplyCompactMode();
+
         _autoCloseTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(durationSeconds)
         };
-        _autoCloseTimer.Tick += (s, e) => Close();
+        _autoCloseTimer.Tick += (s, e) => FadeOutAndClose();
         _autoCloseTimer.Start();
     }
 
-    public ToastWindow(BitmapSource image, ToastPosition position, int durationSeconds)
+    public ToastWindow(BitmapSource image, ToastPosition position, int durationSeconds, bool isCompact = false)
     {
         InitializeComponent();
+        _targetOpacity = (App.SettingsService?.Settings.ToastOpacityPercent ?? 100) / 100.0;
         _imageContent = image;
         _position = position;
 
@@ -112,20 +119,23 @@ public partial class ToastWindow : Window
         ImagePreview.Source = image;
         ImagePreviewBorder.Visibility = Visibility.Visible;
 
+        if (isCompact) ApplyCompactMode();
+
         _autoCloseTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(durationSeconds)
         };
-        _autoCloseTimer.Tick += (s, e) => Close();
+        _autoCloseTimer.Tick += (s, e) => FadeOutAndClose();
         _autoCloseTimer.Start();
     }
 
     /// <summary>
     /// 파일 복사용 생성자
     /// </summary>
-    public ToastWindow(string filePath, bool isFile, ToastPosition position, int durationSeconds)
+    public ToastWindow(string filePath, bool isFile, ToastPosition position, int durationSeconds, bool isCompact = false)
     {
         InitializeComponent();
+        _targetOpacity = (App.SettingsService?.Settings.ToastOpacityPercent ?? 100) / 100.0;
         _filePath = filePath;
         _position = position;
 
@@ -134,7 +144,7 @@ public partial class ToastWindow : Window
 
         var fileName = Path.GetFileName(filePath);
         var fileInfo = new FileInfo(filePath);
-        var sizeText = FormatFileSize(fileInfo.Length);
+        var sizeText = Loc.FormatSize(fileInfo.Length);
 
         MessageText.Text = Loc.FileCopied;
         PreviewText.Text = $"{fileName} ({sizeText})";
@@ -163,47 +173,105 @@ public partial class ToastWindow : Window
         // 파일 복사 시 저장 버튼 비활성화
         SaveButton.Visibility = Visibility.Collapsed;
 
+        if (isCompact) ApplyCompactMode();
+
         _autoCloseTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(durationSeconds)
         };
-        _autoCloseTimer.Tick += (s, e) => Close();
+        _autoCloseTimer.Tick += (s, e) => FadeOutAndClose();
         _autoCloseTimer.Start();
     }
 
-    private static string FormatFileSize(long bytes)
+    /// <summary>
+    /// 설정 미리보기용 생성자
+    /// </summary>
+    internal ToastWindow(ToastPosition position, bool isCompact, int opacityPercent)
     {
-        string[] sizes = { "B", "KB", "MB", "GB" };
-        int order = 0;
-        double size = bytes;
-        while (size >= 1024 && order < sizes.Length - 1)
+        InitializeComponent();
+        _targetOpacity = opacityPercent / 100.0;
+        _position = position;
+        _textContent = Loc.ToastPreviewText;
+
+        SaveButton.Content = Loc.BtnSave;
+        EditButton.Content = Loc.BtnEdit;
+
+        MessageText.Text = Loc.ToastPreviewText;
+        PreviewText.Text = "Hello, AutoPad!";
+
+        if (isCompact) ApplyCompactMode();
+
+        // 미리보기용 - 자동 닫기 없음, 버튼 비활성화
+        _autoCloseTimer = new DispatcherTimer();
+        SaveButton.IsEnabled = false;
+        EditButton.IsEnabled = false;
+        HtmlViewButton.IsEnabled = false;
+        FileEditButton.IsEnabled = false;
+        FileOpenButton.IsEnabled = false;
+        FolderOpenButton.IsEnabled = false;
+        UrlOpenButton.IsEnabled = false;
+        CloseBtn.IsEnabled = false;
+    }
+
+    /// <summary>
+    /// 미리보기 투명도 실시간 업데이트
+    /// </summary>
+    internal void UpdatePreviewOpacity(double opacity)
+    {
+        _targetOpacity = opacity;
+        ToastBorder.BeginAnimation(UIElement.OpacityProperty, null);
+        ToastBorder.Opacity = opacity;
+    }
+
+    private void ApplyCompactMode()
+    {
+        MessageText.Visibility = Visibility.Collapsed;
+        PreviewText.Visibility = Visibility.Collapsed;
+        ImagePreviewBorder.Visibility = Visibility.Collapsed;
+        CloseBtn.Visibility = Visibility.Collapsed;
+        SizeToContent = SizeToContent.WidthAndHeight;
+
+        // 버튼 패딩 축소
+        foreach (var btn in new[] { SaveButton, EditButton, HtmlViewButton, FileEditButton, FileOpenButton, FolderOpenButton, UrlOpenButton })
         {
-            order++;
-            size /= 1024;
+            btn.Padding = new Thickness(10, 5, 10, 5);
+            btn.FontSize = 12;
         }
-        return $"{size:0.##} {sizes[order]}";
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
         PositionWindow();
+        // Fade in to target opacity
+        var fadeIn = new DoubleAnimation(0, _targetOpacity, TimeSpan.FromMilliseconds(200));
+        ToastBorder.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+    }
+
+    private void FadeOutAndClose()
+    {
+        _autoCloseTimer.Stop();
+        var fadeOut = new DoubleAnimation(ToastBorder.Opacity, 0, TimeSpan.FromMilliseconds(200));
+        fadeOut.Completed += (s, e) => Close();
+        ToastBorder.BeginAnimation(UIElement.OpacityProperty, fadeOut);
     }
 
     private void PositionWindow()
     {
         var workArea = SystemParameters.WorkArea;
-        
+        var w = ActualWidth > 0 ? ActualWidth : (double.IsNaN(Width) ? 300 : Width);
+        var h = ActualHeight > 0 ? ActualHeight : (double.IsNaN(Height) ? 80 : Height);
+
         Left = _position switch
         {
             ToastPosition.BottomLeft or ToastPosition.TopLeft => workArea.Left + 20,
-            ToastPosition.BottomRight or ToastPosition.TopRight => workArea.Right - Width - 20,
-            _ => workArea.Left + (workArea.Width - Width) / 2
+            ToastPosition.BottomRight or ToastPosition.TopRight => workArea.Right - w - 20,
+            _ => workArea.Left + (workArea.Width - w) / 2
         };
 
         Top = _position switch
         {
             ToastPosition.Top or ToastPosition.TopLeft or ToastPosition.TopRight => workArea.Top + 20,
-            _ => workArea.Bottom - Height - 20
+            _ => workArea.Bottom - h - 20
         };
     }
 
@@ -280,7 +348,7 @@ public partial class ToastWindow : Window
         
         try
         {
-            Process.Start(new ProcessStartInfo("explorer.exe", _detectedPath));
+            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{_detectedPath}\""));
         }
         catch { }
         
@@ -361,7 +429,7 @@ public partial class ToastWindow : Window
                 };
 
                 encoder.Frames.Add(BitmapFrame.Create(image));
-                using var stream = File.OpenWrite(dialog.FileName);
+                using var stream = File.Create(dialog.FileName);
                 encoder.Save(stream);
             }
             catch (Exception ex)
@@ -373,19 +441,28 @@ public partial class ToastWindow : Window
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
-        _autoCloseTimer.Stop();
-        Close();
+        FadeOutAndClose();
     }
 
     protected override void OnMouseEnter(System.Windows.Input.MouseEventArgs e)
     {
         base.OnMouseEnter(e);
         _autoCloseTimer.Stop();
+        if (_targetOpacity < 1.0)
+        {
+            var fadeIn = new DoubleAnimation(ToastBorder.Opacity, 1.0, TimeSpan.FromMilliseconds(150));
+            ToastBorder.BeginAnimation(UIElement.OpacityProperty, fadeIn);
+        }
     }
 
     protected override void OnMouseLeave(System.Windows.Input.MouseEventArgs e)
     {
         base.OnMouseLeave(e);
         _autoCloseTimer.Start();
+        if (_targetOpacity < 1.0)
+        {
+            var fadeOut = new DoubleAnimation(ToastBorder.Opacity, _targetOpacity, TimeSpan.FromMilliseconds(150));
+            ToastBorder.BeginAnimation(UIElement.OpacityProperty, fadeOut);
+        }
     }
 }

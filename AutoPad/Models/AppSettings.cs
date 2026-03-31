@@ -46,9 +46,34 @@ public class AppSettings
     public bool IsFileMonitoringEnabled { get; set; } = true;
 
     /// <summary>
+    /// 이미지 복사 모니터링 활성화
+    /// </summary>
+    public bool IsImageMonitoringEnabled { get; set; } = true;
+
+    /// <summary>
     /// 파일 복사 모니터링 크기 제한 (MB)
     /// </summary>
     public int FileMonitoringMaxSizeMB { get; set; } = 10;
+
+    /// <summary>
+    /// 컴팩트 모드 (토스트에 버튼만 표시)
+    /// </summary>
+    public bool IsCompactMode { get; set; } = false;
+
+    /// <summary>
+    /// 토스트 투명도 (10~100%)
+    /// </summary>
+    public int ToastOpacityPercent { get; set; } = 100;
+
+    /// <summary>
+    /// 클립보드 히스토리 활성화
+    /// </summary>
+    public bool IsHistoryEnabled { get; set; } = true;
+
+    /// <summary>
+    /// 히스토리 최대 저장 개수
+    /// </summary>
+    public int HistoryMaxItems { get; set; } = 50;
 }
 
 public enum ToastPosition

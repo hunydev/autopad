@@ -27,9 +27,12 @@ public partial class App : Application
     private NotifyIcon? _notifyIcon;
     private ClipboardMonitor? _clipboardMonitor;
     private SettingsService _settingsService = new();
+    private ClipboardHistoryService _historyService = new();
+    private bool _isSettingsPaused;
     private MainWindow? _hiddenWindow;
     private ToastWindow? _currentToast;
     private SettingsWindow? _settingsWindow;
+    private HistoryWindow? _historyWindow;
     private ToolStripMenuItem? _monitoringItem;
 
     /// <summary>
@@ -50,6 +53,10 @@ public partial class App : Application
 
         _settingsService.Load();
         SettingsService = _settingsService;
+
+        // 히스토리 서비스 로드
+        _historyService.MaxItems = _settingsService.Settings.HistoryMaxItems;
+        _historyService.Load();
 
         // 언어 설정 적용
         Loc.Language = _settingsService.Settings.Language;
@@ -105,6 +112,10 @@ public partial class App : Application
         };
         contextMenu.Items.Add(_monitoringItem);
 
+        var historyItem = new ToolStripMenuItem(Loc.TrayHistory);
+        historyItem.Click += (s, e) => Dispatcher.Invoke(() => OpenHistoryWindow());
+        contextMenu.Items.Add(historyItem);
+
         contextMenu.Items.Add(new ToolStripSeparator());
 
         var settingsItem = new ToolStripMenuItem(Loc.TraySettings);
@@ -134,8 +145,10 @@ public partial class App : Application
         }
 
         _settingsWindow = new SettingsWindow(_settingsService);
+        _isSettingsPaused = true;
         _settingsWindow.Closed += (s, e) =>
         {
+            _isSettingsPaused = false;
             _settingsWindow = null;
             if (_monitoringItem != null)
             {
@@ -145,10 +158,25 @@ public partial class App : Application
             if (_clipboardMonitor != null)
             {
                 _clipboardMonitor.IsFileMonitoringEnabled = _settingsService.Settings.IsFileMonitoringEnabled;
+                _clipboardMonitor.IsImageMonitoringEnabled = _settingsService.Settings.IsImageMonitoringEnabled;
                 _clipboardMonitor.MaxFileSizeBytes = _settingsService.Settings.FileMonitoringMaxSizeMB * 1024L * 1024L;
             }
         };
         _settingsWindow.Show();
+    }
+
+    private void OpenHistoryWindow()
+    {
+        if (_historyWindow != null && _historyWindow.IsLoaded)
+        {
+            _historyWindow.Activate();
+            _historyWindow.Focus();
+            return;
+        }
+
+        _historyWindow = new HistoryWindow(_historyService);
+        _historyWindow.Closed += (s, e) => _historyWindow = null;
+        _historyWindow.Show();
     }
 
     private void SetupClipboardMonitor()
@@ -158,6 +186,7 @@ public partial class App : Application
         
         // 파일 모니터링 설정 적용
         _clipboardMonitor.IsFileMonitoringEnabled = _settingsService.Settings.IsFileMonitoringEnabled;
+        _clipboardMonitor.IsImageMonitoringEnabled = _settingsService.Settings.IsImageMonitoringEnabled;
         _clipboardMonitor.MaxFileSizeBytes = _settingsService.Settings.FileMonitoringMaxSizeMB * 1024L * 1024L;
         
         if (_hiddenWindow != null)
@@ -170,6 +199,10 @@ public partial class App : Application
     {
         // 모니터링 비활성화 상태면 무시
         if (!_settingsService.Settings.IsMonitoringEnabled)
+            return;
+
+        // 설정 창이 열려있는 동안 일시 중단
+        if (_isSettingsPaused)
             return;
 
         // 편집 창에서 복사한 경우 무시
@@ -185,17 +218,26 @@ public partial class App : Application
 
             if (e.ContentType == ClipboardContentType.Text && e.Content is string text)
             {
-                _currentToast = new ToastWindow(text, settings.ToastPosition, settings.ToastDurationSeconds, e.HtmlContent);
+                if (settings.IsHistoryEnabled)
+                    _historyService.AddText(text, Encoding.UTF8.GetByteCount(text));
+
+                _currentToast = new ToastWindow(text, settings.ToastPosition, settings.ToastDurationSeconds, settings.IsCompactMode, e.HtmlContent);
                 _currentToast.Show();
             }
             else if (e.ContentType == ClipboardContentType.Image && e.Content is BitmapSource image)
             {
-                _currentToast = new ToastWindow(image, settings.ToastPosition, settings.ToastDurationSeconds);
+                if (settings.IsHistoryEnabled)
+                    _historyService.AddImage(image);
+
+                _currentToast = new ToastWindow(image, settings.ToastPosition, settings.ToastDurationSeconds, settings.IsCompactMode);
                 _currentToast.Show();
             }
             else if (e.ContentType == ClipboardContentType.File && e.Content is string filePath)
             {
-                _currentToast = new ToastWindow(filePath, isFile: true, settings.ToastPosition, settings.ToastDurationSeconds);
+                if (settings.IsHistoryEnabled)
+                    _historyService.AddFile(filePath);
+
+                _currentToast = new ToastWindow(filePath, isFile: true, settings.ToastPosition, settings.ToastDurationSeconds, settings.IsCompactMode);
                 _currentToast.Show();
             }
         });
@@ -203,6 +245,7 @@ public partial class App : Application
 
     private void Application_Exit(object sender, ExitEventArgs e)
     {
+        _historyService.Save();
         _clipboardMonitor?.Dispose();
         _notifyIcon?.Dispose();
         _mutex?.ReleaseMutex();

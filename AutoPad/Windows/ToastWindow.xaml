@@ -73,12 +73,14 @@
         </Style>
     </Window.Resources>
     
-    <Border Background="#2D2D30" 
+    <Border x:Name="ToastBorder"
+            Background="#2D2D30" 
             CornerRadius="8" 
             BorderBrush="#3F3F46"
             BorderThickness="1"
             Margin="8"
-            MinHeight="70">
+            MinHeight="70"
+            Opacity="0">
         <Border.Effect>
             <DropShadowEffect BlurRadius="15" 
                               ShadowDepth="3" 
