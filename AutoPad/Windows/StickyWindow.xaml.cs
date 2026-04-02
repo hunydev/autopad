@@ -128,7 +128,13 @@ public partial class StickyWindow : Window
         if (_isFitToWindow)
         {
             ContentImage.Stretch = Stretch.Uniform;
-            ContentImage.StretchDirection = System.Windows.Controls.StretchDirection.DownOnly;
+            ContentImage.StretchDirection = System.Windows.Controls.StretchDirection.Both;
+            ContentImage.Width = double.NaN;
+            ContentImage.Height = double.NaN;
+            ContentImage.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
+            ContentImage.VerticalAlignment = System.Windows.VerticalAlignment.Stretch;
+            ImageScrollViewer.HorizontalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Disabled;
+            ImageScrollViewer.VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Disabled;
             if (_fitIconText != null) _fitIconText.Text = "\uE71E";
             FitToggleButton.ToolTip = Loc.FitOriginal;
         }
@@ -136,9 +142,27 @@ public partial class StickyWindow : Window
         {
             ContentImage.Stretch = Stretch.None;
             ContentImage.StretchDirection = System.Windows.Controls.StretchDirection.Both;
+            ContentImage.Width = _image.PixelWidth;
+            ContentImage.Height = _image.PixelHeight;
+            ContentImage.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+            ContentImage.VerticalAlignment = System.Windows.VerticalAlignment.Top;
+            ImageScrollViewer.HorizontalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto;
+            ImageScrollViewer.VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto;
             if (_fitIconText != null) _fitIconText.Text = "\uE9A6";
             FitToggleButton.ToolTip = Loc.FitToWindow;
         }
+    }
+
+    private void ImageScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if ((Keyboard.Modifiers & ModifierKeys.Shift) != ModifierKeys.Shift)
+        {
+            return;
+        }
+
+        var targetOffset = ImageScrollViewer.HorizontalOffset - e.Delta;
+        ImageScrollViewer.ScrollToHorizontalOffset(targetOffset);
+        e.Handled = true;
     }
 
     private void EditButton_Click(object sender, RoutedEventArgs e)

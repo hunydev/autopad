@@ -11,10 +11,13 @@ Key capabilities:
 • Toast notifications with content preview, character count, and byte size
 • Built-in text editor with instant copy-back
 • Image markup: pen, eraser, region select with mosaic, fill, and erase
+• JavaScript macro system — 28 built-in presets for text transformation
+• Sticky notes — pin copied content as always-on-top windows
+• Clipboard history with search and re-copy
+• Image Base64 copy (full or selected region)
 • HTML source viewer for formatted web content
 • File/folder path detection with quick-open in Explorer
-• UTF-8 / EUC-KR encoding conversion
-• Configurable toast position and duration
+• Toast opacity, compact mode, and spell check options
 • Full dark theme UI
 • English and Korean interface
 • Runs quietly from the system tray
@@ -24,13 +27,16 @@ AutoPad is lightweight, privacy-respecting (no data leaves your machine), and st
 
 ## 이 버전의 새로운 기능 (What's new in this version)
 
-• Initial release
-• Clipboard monitoring for text, images, and files
-• Toast notifications with preview
-• Built-in text and image editor
-• HTML source viewer
-• Dark theme UI
-• English and Korean language support
+• JavaScript macro system with sandboxed Jint engine
+• 28 built-in macro presets (masking, JSON, Base64, sorting, extraction, and more)
+• Macro editor with test execution and script validation
+• Macro management: add, edit, delete, reorder, and presets
+• Sticky notes (Pin) — pin text or images as always-on-top memo windows
+• Sticky: always-on-top toggle, edit mode, image fit toggle, resizable
+• Image Base64 copy (full image or selected region as data URI)
+• Special whitespace removal split into dropdown (delete vs replace with space)
+• Spell check option for text editor (Settings > General)
+• Settings macro tab (4-tab layout: General / Notification / History / Macro)
 
 
 ## 제품 기능 (Product features) — 최대 20개, 각 200자 이하
@@ -53,6 +59,8 @@ AutoPad is lightweight, privacy-respecting (no data leaves your machine), and st
 16. Single-instance enforcement
 17. Privacy-first — no network calls
 18. Undo support for image operations
+19. JavaScript macro system with 28 presets
+20. Sticky notes with always-on-top
 
 
 ## 간단한 설명 (Short description) — 270자 이하

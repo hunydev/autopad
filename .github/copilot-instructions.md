@@ -5,7 +5,7 @@
 AutoPad은 Windows 클립보드 모니터링 유틸리티다. 텍스트/이미지/파일 복사를 실시간 감지하여 토스트 알림을 표시하고, 즉석 편집 기능을 제공한다. Microsoft Store에 $0.99로 판매 중이며, 소스 코드는 MIT 라이선스.
 
 - **개발자**: hunydev
-- **현재 버전**: 1.0.6.0
+- **현재 버전**: 1.1.0.0
 - **GitHub**: https://github.com/hunydev/autopad
 - **Store**: https://apps.microsoft.com/detail/autopad
 - **Landing page**: https://hunydev.github.io/autopad/ (`docs/` 폴더가 GitHub Pages로 배포됨)
@@ -62,18 +62,23 @@ autopad/                          ← 리포지토리 루트 (workspace root)
 │   │   ├── ClipboardMonitor.cs       ← Win32 AddClipboardFormatListener
 │   │   ├── ClipboardHistoryService.cs ← 히스토리 JSON 저장/로드
 │   │   ├── Localization.cs           ← 다국어 문자열 (en/ko), Loc 정적 클래스
+│   │   ├── MacroService.cs           ← Jint JS 매크로 실행/프리셋
 │   │   ├── SettingsService.cs        ← JSON 설정 파일 관리
 │   │   ├── ThemeHelper.cs            ← DwmSetWindowAttribute 다크 타이틀바
 │   │   └── IconHelper.cs             ← 동적 앱 아이콘 생성
 │   ├── Models/
 │   │   ├── AppSettings.cs            ← 설정 데이터 모델 + ToastPosition enum
-│   │   └── ClipboardHistoryItem.cs   ← 히스토리 아이템 모델
+│   │   ├── ClipboardHistoryItem.cs   ← 히스토리 아이템 모델
+│   │   └── MacroItem.cs              ← 매크로 아이템 모델
 │   ├── Windows/
 │   │   ├── ToastWindow.xaml(.cs)     ← 토스트 알림 팝업
 │   │   ├── EditWindow.xaml(.cs)      ← 텍스트/이미지 편집 창
 │   │   ├── HistoryWindow.xaml(.cs)   ← 클립보드 히스토리 브라우저
 │   │   ├── HtmlViewerWindow.xaml(.cs)← HTML 소스 뷰어
-│   │   └── SettingsWindow.xaml(.cs)  ← 설정 대화상자 (탭: 일반/알림/히스토리)
+│   │   ├── SettingsWindow.xaml(.cs)  ← 설정 대화상자 (탭: 일반/알림/히스토리/매크로)
+│   │   ├── MacroEditorWindow.xaml(.cs) ← 매크로 편집 모달
+│   │   ├── MacroPresetWindow.xaml(.cs) ← 매크로 프리셋 선택 모달
+│   │   └── StickyWindow.xaml(.cs)    ← 스티커 메모 (고정) 창
 │   ├── Assets/                   ← MSIX 로고 이미지 (150x150, 310x310 등)
 │   ├── Resources/                ← app.ico, icon.png
 │   └── Tools/                    ← (비어있음)
@@ -156,6 +161,8 @@ autopad/                          ← 리포지토리 루트 (workspace root)
 | StartWithWindows | bool | false | 자동 시작 |
 | StartMinimized | bool | true | 최소화 시작 |
 | IsDarkMode | bool | true | 다크 모드 |
+| Macros | List<MacroItem> | [] | JS 매크로 목록 |
+| IsSpellCheckEnabled | bool | false | 맞춤법 검사 |
 
 ---
 
@@ -185,7 +192,7 @@ autopad/                          ← 리포지토리 루트 (workspace root)
 - 파일 모니터링 설정 즉시 적용
 - 앱 아이콘 통일
 
-### v1.0.6.0 (현재)
+### v1.0.6.0
 - 클립보드 히스토리 (검색, 재복사, 편집)
 - 토스트 투명도 조절 (10~100%, hover 시 선명)
 - 컴팩트 토스트 모드
@@ -195,6 +202,18 @@ autopad/                          ← 리포지토리 루트 (workspace root)
 - 설정 중 클립보드 모니터링 자동 일시 중단
 - 히스토리 항목 컨텍스트 메뉴 (복사/편집)
 - DarkCheckBox disabled 스타일 (opacity 0.4)
+
+### v1.1.0.0 (현재)
+- Jint 기반 JavaScript 매크로 시스템 (샌드박스 실행)
+- 28개 내장 매크로 프리셋 (마스킹, JSON, Base64, 정렬, 추출 등)
+- 매크로 편집기 (테스트 실행, 스크립트 검증)
+- 매크로 관리 (추가/편집/삭제/순서변경/프리셋)
+- 스티커 메모 (고정) 기능 — 편집 창에서 Pin 버튼으로 내용 고정
+- 스티커: Always on top 토글, 편집 전환, 이미지 Fit 토글, 리사이즈
+- 이미지 Base64 복사 (전체/선택 영역 → data URI)
+- 특수 공백 제거를 드롭다운 메뉴로 분리 (삭제/공백 치환)
+- 텍스트 편집기 맞춤법 검사 옵션 (설정 > 일반)
+- 설정 매크로 탭 추가 (4탭 구성: 일반/알림/히스토리/매크로)
 
 ---
 

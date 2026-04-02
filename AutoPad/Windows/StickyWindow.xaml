@@ -167,9 +167,18 @@
 
                 <!-- 이미지 모드 -->
                 <Border x:Name="ImageContainer" Visibility="Collapsed">
-                    <Image x:Name="ContentImage"
-                           Stretch="Uniform"
-                           StretchDirection="DownOnly"/>
+                    <ScrollViewer x:Name="ImageScrollViewer"
+                                  CanContentScroll="False"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  PreviewMouseWheel="ImageScrollViewer_PreviewMouseWheel">
+                        <ScrollViewer.Resources>
+                            <Style TargetType="ScrollBar" BasedOn="{StaticResource DarkScrollBar}"/>
+                        </ScrollViewer.Resources>
+                        <Image x:Name="ContentImage"
+                               Stretch="Uniform"
+                               StretchDirection="Both"/>
+                    </ScrollViewer>
                 </Border>
             </Grid>
         </Grid>

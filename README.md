@@ -21,6 +21,10 @@ A lightweight Windows clipboard monitoring utility that detects copied content i
 - **Multi-language** — English (default) and Korean UI
 - **System Tray** — Runs quietly in the background with tray icon
 - **Dark Theme** — Full dark mode UI including title bar and scrollbars
+- **JavaScript Macros** — Transform clipboard text with sandboxed JS macros; 28 built-in presets (masking, JSON, Base64, sorting, etc.)
+- **Sticky Notes** — Pin copied text or images as always-on-top sticky windows with resize and edit toggle
+- **Image Base64 Copy** — Copy full image or selected region as a Base64 data URI
+- **Spell Check** — Optional spell checking in the text editor
 - **Auto-start** — Optional Windows startup registration
 
 ## Screenshots
@@ -92,6 +96,8 @@ Double-click the tray icon or right-click → Settings:
 | Image Monitoring | Enable/disable image copy detection |
 | File Copy Monitoring | Enable/disable with size limit (1–100 MB) |
 | Clipboard History | Enable/disable with configurable max items (20–200) |
+| JavaScript Macros | Manage JS macros with built-in presets |
+| Spell Check | Enable/disable spell checking in text editor |
 | Auto-start | Register with Windows startup |
 | Start Minimized | Launch directly to system tray |
 
@@ -111,6 +117,7 @@ Double-click the tray icon or right-click → Settings:
 - **InkCanvas** — Image drawing with pen, eraser (stroke/point modes), and brush size control
 - **BitmapSource pixel manipulation** — Mosaic, solid fill, and transparent erase on selected regions
 - **CF_HTML parsing** — Raw clipboard HTML format extraction with UTF-8 byte offset handling
+- **Jint** — Sandboxed JavaScript engine for macro execution
 - **Mutex** — Single instance enforcement
 
 ## Project Structure
@@ -122,18 +129,23 @@ AutoPad/
 │   ├── ClipboardMonitor.cs  # Win32 clipboard change listener
 │   ├── ClipboardHistoryService.cs  # Clipboard history persistence
 │   ├── Localization.cs      # Multi-language string resources (en/ko)
+│   ├── MacroService.cs      # Jint JS macro execution & presets
 │   ├── SettingsService.cs   # JSON settings persistence
 │   ├── ThemeHelper.cs       # Dark mode DWM API
 │   └── IconHelper.cs        # Dynamic app icon generation
 ├── Models/
 │   ├── AppSettings.cs       # Settings data model
-│   └── ClipboardHistoryItem.cs  # History item model
+│   ├── ClipboardHistoryItem.cs  # History item model
+│   └── MacroItem.cs         # Macro item model
 └── Windows/
     ├── ToastWindow.xaml      # Toast notification popup
     ├── EditWindow.xaml       # Text/image editing window
     ├── HistoryWindow.xaml    # Clipboard history browser
     ├── HtmlViewerWindow.xaml # HTML source viewer (read-only)
-    └── SettingsWindow.xaml   # Settings dialog (tabbed: General/Notification/History)
+    ├── MacroEditorWindow.xaml    # Macro script editor
+    ├── MacroPresetWindow.xaml    # Macro preset picker
+    ├── SettingsWindow.xaml   # Settings dialog (tabbed: General/Notification/History/Macros)
+    └── StickyWindow.xaml     # Sticky memo (pin) window
 ```
 
 ## License
