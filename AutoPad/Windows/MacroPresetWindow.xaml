@@ -131,7 +131,7 @@
 
         <!-- 프리셋 체크박스 목록 -->
         <Border Grid.Row="2" Background="#252526" CornerRadius="4" BorderBrush="#3F3F46" BorderThickness="1">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Style="{StaticResource DarkScrollViewer}">
                 <StackPanel x:Name="PresetPanel" Margin="4"/>
             </ScrollViewer>
         </Border>

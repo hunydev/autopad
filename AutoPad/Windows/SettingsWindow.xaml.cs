@@ -50,6 +50,8 @@ public partial class SettingsWindow : Window
         FileSizeLimitLabel.Text = Loc.SettingsFileSizeLimit;
         StartWithWindowsCheckBox.Content = Loc.SettingsAutoStart;
         StartMinimizedCheckBox.Content = Loc.SettingsStartMinimized;
+        SpellCheckCheckBox.Content = Loc.SpellCheckLabel;
+        SpellCheckTooltipText.Text = Loc.SpellCheckTooltip;
         
         // 알림 탭
         PositionLabelText.Text = Loc.SettingsToastPosition;
@@ -129,6 +131,7 @@ public partial class SettingsWindow : Window
         
         StartWithWindowsCheckBox.IsChecked = settings.StartWithWindows;
         StartMinimizedCheckBox.IsChecked = settings.StartMinimized;
+        SpellCheckCheckBox.IsChecked = settings.IsSpellCheckEnabled;
         CompactModeCheckBox.IsChecked = settings.IsCompactMode;
         OpacitySlider.Value = settings.ToastOpacityPercent;
         OpacityValueText.Text = $"{settings.ToastOpacityPercent}%";
@@ -275,6 +278,7 @@ public partial class SettingsWindow : Window
         bool langChanged = oldLang != settings.Language;
         
         settings.StartMinimized = StartMinimizedCheckBox.IsChecked ?? true;
+        settings.IsSpellCheckEnabled = SpellCheckCheckBox.IsChecked ?? false;
         settings.IsCompactMode = CompactModeCheckBox.IsChecked ?? false;
         settings.ToastOpacityPercent = (int)OpacitySlider.Value;
         settings.IsHistoryEnabled = HistoryCheckBox.IsChecked ?? true;

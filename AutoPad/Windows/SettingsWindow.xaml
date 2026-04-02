@@ -253,7 +253,8 @@
         </StackPanel>
 
         <!-- 탭 콘텐츠 -->
-        <Grid Grid.Row="2">
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Style="{StaticResource DarkScrollViewer}">
+        <Grid>
             <!-- 일반 탭 -->
             <StackPanel x:Name="PanelGeneral">
                 <TextBlock x:Name="LanguageLabelText" Text="언어" Style="{StaticResource LabelStyle}"/>
@@ -298,6 +299,45 @@
                 <CheckBox x:Name="StartMinimizedCheckBox" 
                           Content="시작 시 최소화 (트레이)" 
                           Style="{StaticResource DarkCheckBox}"/>
+
+                <!-- 맞춤법 검사 -->
+                <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                    <CheckBox x:Name="SpellCheckCheckBox"
+                              Content="맞춤법 검사"
+                              Style="{StaticResource DarkCheckBox}"/>
+                    <Button x:Name="SpellCheckHelpButton"
+                            Content="&#xE897;"
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="14"
+                            Foreground="#888888"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            VerticalAlignment="Center"
+                            Margin="6,0,0,0"
+                            ToolTipService.InitialShowDelay="0"
+                            ToolTipService.ShowDuration="30000">
+                        <Button.ToolTip>
+                            <ToolTip MaxWidth="350" Background="#333337" Foreground="#E0E0E0" BorderBrush="#555555">
+                                <TextBlock x:Name="SpellCheckTooltipText"
+                                           Text="Windows 기본 맞춤법 검사를 사용합니다."
+                                           TextWrapping="Wrap"/>
+                            </ToolTip>
+                        </Button.ToolTip>
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="Transparent">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Foreground" Value="#CCCCCC"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
             </StackPanel>
 
             <!-- 알림 탭 -->
@@ -387,6 +427,9 @@
                              FontSize="13"
                              SelectionChanged="MacroListBox_SelectionChanged"
                              KeyDown="MacroListBox_KeyDown">
+                        <ListBox.Resources>
+                            <Style TargetType="ScrollBar" BasedOn="{StaticResource DarkScrollBar}"/>
+                        </ListBox.Resources>
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem">
                                 <Setter Property="Background" Value="Transparent"/>
@@ -554,6 +597,7 @@
                 </StackPanel>
             </Grid>
         </Grid>
+        </ScrollViewer>
 
         <!-- 저장 버튼 -->
         <Button x:Name="SettingsSaveButton" Grid.Row="3"

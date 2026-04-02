@@ -448,7 +448,8 @@
                     <!-- 목록 -->
                     <ScrollViewer Grid.Row="1"
                                   VerticalScrollBarVisibility="Auto"
-                                  MaxHeight="280">
+                                  MaxHeight="280"
+                                  Style="{StaticResource DarkScrollViewer}">
                         <StackPanel x:Name="MacroPopupPanel">
                             <TextBlock x:Name="MacroEmptyText"
                                        Text="No macros"

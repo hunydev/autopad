@@ -79,6 +79,11 @@ public class AppSettings
     /// 매크로 목록
     /// </summary>
     public List<MacroItem> Macros { get; set; } = new();
+
+    /// <summary>
+    /// 맞춤법 검사 활성화
+    /// </summary>
+    public bool IsSpellCheckEnabled { get; set; } = false;
 }
 
 public enum ToastPosition

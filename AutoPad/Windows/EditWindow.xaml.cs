@@ -87,6 +87,14 @@ public partial class EditWindow : Window
         MacroEmptyText.Text = Loc.MacroEmpty;
     }
 
+    private void ApplySpellCheck()
+    {
+        if (App.SettingsService?.Settings.IsSpellCheckEnabled == true)
+        {
+            ContentTextBox.SpellCheck.IsEnabled = true;
+        }
+    }
+
     public EditWindow(string text, bool isDarkMode = true)
     {
         InitializeComponent();
@@ -104,6 +112,7 @@ public partial class EditWindow : Window
         ContentTextBox.MouseLeave += ContentTextBox_MouseLeave;
         
         TextToolbar.Visibility = Visibility.Visible;
+        ApplySpellCheck();
         
         var lineCount = text.Split('\n').Length;
         var byteSize = Encoding.UTF8.GetByteCount(text);
@@ -207,6 +216,7 @@ public partial class EditWindow : Window
             LoadFileAsText(filePath);
             EncodingToolbar.Visibility = Visibility.Visible;
             TextToolbar.Visibility = Visibility.Visible;
+            ApplySpellCheck();
             ContentTextBox.SelectionChanged += ContentTextBox_SelectionChanged;
             ContentTextBox.PreviewMouseMove += ContentTextBox_PreviewMouseMove;
             ContentTextBox.MouseLeave += ContentTextBox_MouseLeave;

@@ -220,6 +220,35 @@ public static class Loc
     public static string PresetMarkdownTable => Get("CSV/TSV → Markdown Table", "CSV/TSV → 마크다운 테이블");
     public static string PresetBase64Encode => Get("Base64 Encode", "Base64 인코딩");
     public static string PresetBase64Decode => Get("Base64 Decode", "Base64 디코딩");
+    public static string PresetReverseLines => Get("Reverse Lines", "라인 역순 정렬");
+    public static string PresetNumberLines => Get("Number Lines", "라인 번호 추가");
+    public static string PresetRemoveEmptyLines => Get("Remove Empty Lines", "빈 라인 제거");
+    public static string PresetUpperCase => Get("UPPER CASE", "대문자 변환");
+    public static string PresetLowerCase => Get("lower case", "소문자 변환");
+    public static string PresetTitleCase => Get("Title Case", "타이틀 케이스");
+    public static string PresetExtractUrls => Get("Extract URLs", "URL 추출");
+    public static string PresetExtractEmails => Get("Extract Emails", "이메일 추출");
+    public static string PresetExtractNumbers => Get("Extract Numbers", "숫자 추출");
+    public static string PresetAddPrefix => Get("Add Prefix to Lines", "각 라인 접두어 추가");
+    public static string PresetAddSuffix => Get("Add Suffix to Lines", "각 라인 접미어 추가");
+    public static string PresetWrapQuotes => Get("Wrap Lines in Quotes", "각 라인 따옴표 감싸기");
+    public static string PresetJoinLines => Get("Join Lines (comma)", "라인 합치기 (쉼표)");
+    public static string PresetSplitToLines => Get("Split to Lines (comma)", "쉼표로 줄 나누기");
+    public static string PresetSlugify => Get("Slugify", "슬러그 변환");
+    public static string PresetCountWords => Get("Word Frequency", "단어 빈도수");
+    public static string PresetXmlFormat => Get("XML/HTML Format", "XML/HTML 포맷");
+    public static string PresetUrlEncode => Get("URL Encode", "URL 인코딩");
+    public static string PresetUrlDecode => Get("URL Decode", "URL 디코딩");
+    public static string PresetEscapeHtml => Get("Escape HTML", "HTML 이스케이프");
+    public static string PresetUnescapeHtml => Get("Unescape HTML", "HTML 언이스케이프");
+    public static string PresetSortLinesDesc => Get("Sort Lines (Descending)", "라인 역순 정렬 (내림차순)");
+    public static string PresetSortByLength => Get("Sort Lines by Length", "라인 길이순 정렬");
+
+    // ── Spell Check ──
+    public static string SpellCheckLabel => Get("Spell check in text editor", "텍스트 편집기 맞춤법 검사");
+    public static string SpellCheckTooltip => Get(
+        "Uses Windows built-in spell check.\nRequires the language pack for your language to be installed in Windows Settings > Time & Language > Language.\nCurrently supports English, French, German, Spanish, and other languages with Windows language packs installed.",
+        "Windows 기본 맞춤법 검사를 사용합니다.\nWindows 설정 > 시간 및 언어 > 언어에서 해당 언어 팩이 설치되어 있어야 합니다.\n현재 영어, 프랑스어, 독일어, 스페인어 등 Windows 언어 팩이 설치된 언어를 지원합니다.");
 
     // ── Size formatting ──
     public static string FormatSize(long bytes)

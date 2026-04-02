@@ -272,6 +272,309 @@ public static class MacroService
                   return result;
                 }
                 """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetReverseLines,
+            Script =
+                """
+                function transform(input) {
+                  return input.split('\n').reverse().join('\n');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetNumberLines,
+            Script =
+                """
+                function transform(input) {
+                  var lines = input.split('\n');
+                  var pad = String(lines.length).length;
+                  return lines.map(function(l, i) {
+                    var num = String(i + 1);
+                    while (num.length < pad) num = ' ' + num;
+                    return num + '  ' + l;
+                  }).join('\n');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetRemoveEmptyLines,
+            Script =
+                """
+                function transform(input) {
+                  return input.split('\n').filter(function(l) {
+                    return l.replace(/\r/, '').trim().length > 0;
+                  }).join('\n');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetUpperCase,
+            Script =
+                """
+                function transform(input) {
+                  return input.toUpperCase();
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetLowerCase,
+            Script =
+                """
+                function transform(input) {
+                  return input.toLowerCase();
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetTitleCase,
+            Script =
+                """
+                function transform(input) {
+                  return input.replace(/\b\w/g, function(ch) {
+                    return ch.toUpperCase();
+                  });
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetExtractUrls,
+            Script =
+                """
+                function transform(input) {
+                  var m = input.match(/https?:\/\/[^\s<>"')\]]+/g);
+                  return m ? m.join('\n') : '';
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetExtractEmails,
+            Script =
+                """
+                function transform(input) {
+                  var m = input.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g);
+                  return m ? m.join('\n') : '';
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetExtractNumbers,
+            Script =
+                """
+                function transform(input) {
+                  var m = input.match(/-?\d+\.?\d*/g);
+                  return m ? m.join('\n') : '';
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetAddPrefix,
+            Script =
+                """
+                function transform(input) {
+                  var prefix = '> ';
+                  return input.split('\n').map(function(l) {
+                    return prefix + l;
+                  }).join('\n');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetAddSuffix,
+            Script =
+                """
+                function transform(input) {
+                  var suffix = ';';
+                  return input.split('\n').map(function(l) {
+                    return l.replace(/\r$/, '') + suffix;
+                  }).join('\n');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetWrapQuotes,
+            Script =
+                """
+                function transform(input) {
+                  return input.split('\n').map(function(l) {
+                    return '"' + l.replace(/\r$/, '').replace(/"/g, '\\"') + '"';
+                  }).join('\n');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetJoinLines,
+            Script =
+                """
+                function transform(input) {
+                  return input.split('\n').map(function(l) {
+                    return l.replace(/\r$/, '');
+                  }).filter(function(l) { return l.length > 0; }).join(', ');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetSplitToLines,
+            Script =
+                """
+                function transform(input) {
+                  return input.split(',').map(function(s) {
+                    return s.trim();
+                  }).join('\n');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetSlugify,
+            Script =
+                """
+                function transform(input) {
+                  return input.toLowerCase()
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/[\s_]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetCountWords,
+            Script =
+                """
+                function transform(input) {
+                  var words = input.toLowerCase().match(/\b[a-zA-Z0-9\u00C0-\u024F\uAC00-\uD7AF]+\b/g);
+                  if (!words) return '(no words found)';
+                  var freq = {};
+                  for (var i = 0; i < words.length; i++) {
+                    freq[words[i]] = (freq[words[i]] || 0) + 1;
+                  }
+                  var entries = [];
+                  for (var w in freq) entries.push({ word: w, count: freq[w] });
+                  entries.sort(function(a, b) { return b.count - a.count; });
+                  return entries.map(function(e) { return e.count + '\t' + e.word; }).join('\n');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetXmlFormat,
+            Script =
+                """
+                function transform(input) {
+                  var s = input.replace(/>\s*</g, '><');
+                  var result = '';
+                  var indent = 0;
+                  var tokens = s.match(/<[^>]+>|[^<]+/g);
+                  if (!tokens) return input;
+                  for (var i = 0; i < tokens.length; i++) {
+                    var t = tokens[i];
+                    if (t.match(/^<\/\w/)) {
+                      indent--;
+                      result += '  '.repeat(Math.max(0, indent)) + t + '\n';
+                    } else if (t.match(/^<\w[^>]*[^\/]>$/)) {
+                      result += '  '.repeat(indent) + t + '\n';
+                      indent++;
+                    } else {
+                      result += '  '.repeat(indent) + t + '\n';
+                    }
+                  }
+                  return result.replace(/\n$/, '');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetUrlEncode,
+            Script =
+                """
+                function transform(input) {
+                  return encodeURIComponent(input);
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetUrlDecode,
+            Script =
+                """
+                function transform(input) {
+                  return decodeURIComponent(input);
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetEscapeHtml,
+            Script =
+                """
+                function transform(input) {
+                  return input
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetUnescapeHtml,
+            Script =
+                """
+                function transform(input) {
+                  return input
+                    .replace(/&amp;/g, '&')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&quot;/g, '"')
+                    .replace(/&#039;/g, "'")
+                    .replace(/&#39;/g, "'");
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetSortLinesDesc,
+            Script =
+                """
+                function transform(input) {
+                  var lines = input.split('\n');
+                  lines.sort(function(a, b) {
+                    return b.replace(/\r$/, '').localeCompare(a.replace(/\r$/, ''));
+                  });
+                  return lines.join('\n');
+                }
+                """
+        },
+        new MacroItem
+        {
+            Name = Loc.PresetSortByLength,
+            Script =
+                """
+                function transform(input) {
+                  var lines = input.split('\n');
+                  lines.sort(function(a, b) {
+                    return a.replace(/\r$/, '').length - b.replace(/\r$/, '').length;
+                  });
+                  return lines.join('\n');
+                }
+                """
         }
     };
     /// <summary>
