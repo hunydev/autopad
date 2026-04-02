@@ -249,6 +249,7 @@
             <RadioButton x:Name="TabGeneral" Content="General" Style="{StaticResource TabBtn}" IsChecked="True" Checked="Tab_Checked"/>
             <RadioButton x:Name="TabNotification" Content="Notification" Style="{StaticResource TabBtn}" Checked="Tab_Checked"/>
             <RadioButton x:Name="TabHistory" Content="History" Style="{StaticResource TabBtn}" Checked="Tab_Checked"/>
+            <RadioButton x:Name="TabMacro" Content="Macro" Style="{StaticResource TabBtn}" Checked="Tab_Checked"/>
         </StackPanel>
 
         <!-- 탭 콘텐츠 -->
@@ -364,6 +365,194 @@
                     </ComboBox>
                 </StackPanel>
             </StackPanel>
+
+            <!-- 매크로 탭 -->
+            <Grid x:Name="PanelMacro" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock x:Name="MacroDescLabel" 
+                           Text="JavaScript macros for text transformation"
+                           Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,12"/>
+
+                <!-- 매크로 목록 -->
+                <Border Grid.Row="1" Background="#252526" CornerRadius="4" BorderBrush="#3F3F46" BorderThickness="1">
+                    <ListBox x:Name="MacroListBox"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Foreground="#E0E0E0"
+                             FontSize="13"
+                             SelectionChanged="MacroListBox_SelectionChanged"
+                             KeyDown="MacroListBox_KeyDown">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="#E0E0E0"/>
+                                <Setter Property="Padding" Value="10,8"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#3E3E42"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="#0078D4"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </Border>
+
+                <!-- 매크로 관리 버튼 -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button x:Name="MacroAddButton" Content="+"
+                            Click="MacroAddButton_Click"
+                            Background="#3C3C3C" Foreground="#E0E0E0" BorderThickness="0"
+                            Width="32" Height="32" Cursor="Hand" FontSize="16" FontWeight="Bold">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#505050"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button x:Name="MacroEditButton" Content="&#xE70F;"
+                            FontFamily="Segoe Fluent Icons"
+                            Click="MacroEditButton_Click"
+                            Background="#3C3C3C" Foreground="#E0E0E0" BorderThickness="0"
+                            Width="32" Height="32" Cursor="Hand" FontSize="14" Margin="4,0,0,0"
+                            IsEnabled="False">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="4" Opacity="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=IsEnabled, Converter={x:Null}}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#505050"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button x:Name="MacroDeleteButton" Content="&#xE74D;"
+                            FontFamily="Segoe Fluent Icons"
+                            Click="MacroDeleteButton_Click"
+                            Background="#3C3C3C" Foreground="#E0E0E0" BorderThickness="0"
+                            Width="32" Height="32" Cursor="Hand" FontSize="14" Margin="4,0,0,0"
+                            IsEnabled="False">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#505050"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <Rectangle Width="1" Fill="#3F3F46" Margin="8,4"/>
+
+                    <!-- 순서 변경 버튼 -->
+                    <Button x:Name="MacroMoveUpButton" Content="&#xE74A;"
+                            FontFamily="Segoe Fluent Icons"
+                            Click="MacroMoveUpButton_Click"
+                            Background="#3C3C3C" Foreground="#E0E0E0" BorderThickness="0"
+                            Width="32" Height="32" Cursor="Hand" FontSize="14"
+                            IsEnabled="False">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#505050"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                    <Button x:Name="MacroMoveDownButton" Content="&#xE74B;"
+                            FontFamily="Segoe Fluent Icons"
+                            Click="MacroMoveDownButton_Click"
+                            Background="#3C3C3C" Foreground="#E0E0E0" BorderThickness="0"
+                            Width="32" Height="32" Cursor="Hand" FontSize="14" Margin="4,0,0,0"
+                            IsEnabled="False">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#505050"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!-- 구분선 -->
+                    <Rectangle Width="1" Fill="#3F3F46" Margin="8,4"/>
+
+                    <!-- 프리셋 버튼 -->
+                    <Button x:Name="MacroPresetButton"
+                            Click="MacroPresetButton_Click"
+                            Background="#3C3C3C" Foreground="#E0E0E0" BorderThickness="0"
+                            Height="32" Cursor="Hand" FontSize="12" Padding="10,0">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="10,0">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#505050"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE710;" FontFamily="Segoe Fluent Icons" FontSize="12" Foreground="#E0E0E0" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="MacroPresetButtonText" Text="Presets" Foreground="#E0E0E0" VerticalAlignment="Center" FontSize="12"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Grid>
 
         <!-- 저장 버튼 -->

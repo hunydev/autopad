@@ -6,9 +6,7 @@ using AutoPad.Models;
 using AutoPad.Services;
 using Microsoft.Win32;
 using WpfComboBox = System.Windows.Controls.ComboBox;
-using WpfComboBoxItem = System.Windows.Controls.ComboBoxItem;
-
-namespace AutoPad.Windows;
+using WpfComboBoxItem = System.Windows.Controls.ComboBoxItem;namespace AutoPad.Windows;
 
 public partial class SettingsWindow : Window
 {
@@ -42,6 +40,7 @@ public partial class SettingsWindow : Window
         TabGeneral.Content = Loc.SettingsTabGeneral;
         TabNotification.Content = Loc.SettingsTabNotification;
         TabHistory.Content = Loc.SettingsTabHistory;
+        TabMacro.Content = Loc.SettingsTabMacro;
         
         // 일반 탭
         LanguageLabelText.Text = Loc.SettingsLanguage;
@@ -63,6 +62,10 @@ public partial class SettingsWindow : Window
         HistorySizeLabel.Text = Loc.SettingsHistorySize;
         
         SettingsSaveButton.Content = Loc.SettingsBtnSave;
+
+        // 매크로 탭
+        MacroDescLabel.Text = Loc.MacroDescription;
+        MacroPresetButtonText.Text = Loc.MacroPresetBtn;
 
         var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
         VersionText.Text = $"v{version!.Major}.{version.Minor}.{version.Build}.{version.Revision}";
@@ -147,6 +150,9 @@ public partial class SettingsWindow : Window
 
         // 언어 선택
         LanguageComboBox.SelectedIndex = settings.Language == "ko" ? 1 : 0;
+
+        // 매크로 목록 로드
+        RefreshMacroList();
     }
 
     private void MonitoringCheckBox_Changed(object sender, RoutedEventArgs e)
@@ -169,6 +175,7 @@ public partial class SettingsWindow : Window
         PanelGeneral.Visibility = TabGeneral.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         PanelNotification.Visibility = TabNotification.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         PanelHistory.Visibility = TabHistory.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        PanelMacro.Visibility = TabMacro.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
 
         if (TabNotification.IsChecked == true)
             ShowPreviewToast();
@@ -437,6 +444,146 @@ public partial class SettingsWindow : Window
         {
             comboBox.IsDropDownOpen = true;
             e.Handled = true;
+        }
+    }
+
+    // ── 매크로 관리 ──
+
+    private void RefreshMacroList()
+    {
+        MacroListBox.Items.Clear();
+        foreach (var macro in _settingsService.Settings.Macros)
+        {
+            MacroListBox.Items.Add(macro.Name);
+        }
+    }
+
+    private void MacroListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        var hasSelection = MacroListBox.SelectedIndex >= 0;
+        var index = MacroListBox.SelectedIndex;
+        var count = _settingsService.Settings.Macros.Count;
+        MacroEditButton.IsEnabled = hasSelection;
+        MacroDeleteButton.IsEnabled = hasSelection;
+        MacroMoveUpButton.IsEnabled = hasSelection && index > 0;
+        MacroMoveDownButton.IsEnabled = hasSelection && index < count - 1;
+    }
+
+    private void MacroListBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Delete && MacroListBox.SelectedIndex >= 0)
+        {
+            MacroDeleteButton_Click(sender, e);
+            e.Handled = true;
+        }
+    }
+
+    private void MacroAddButton_Click(object sender, RoutedEventArgs e)
+    {
+        var macro = new MacroItem();
+        var editor = new MacroEditorWindow(macro, _settingsService.Settings.IsDarkMode)
+        {
+            Owner = this
+        };
+        editor.ShowDialog();
+
+        if (editor.IsSaved)
+        {
+            _settingsService.Settings.Macros.Add(macro);
+            _settingsService.Save();
+            RefreshMacroList();
+        }
+    }
+
+    private void MacroEditButton_Click(object sender, RoutedEventArgs e)
+    {
+        var index = MacroListBox.SelectedIndex;
+        if (index < 0 || index >= _settingsService.Settings.Macros.Count) return;
+
+        var macro = _settingsService.Settings.Macros[index];
+        var editCopy = new MacroItem
+        {
+            Id = macro.Id,
+            Name = macro.Name,
+            Script = macro.Script
+        };
+
+        var editor = new MacroEditorWindow(editCopy, _settingsService.Settings.IsDarkMode)
+        {
+            Owner = this
+        };
+        editor.ShowDialog();
+
+        if (editor.IsSaved)
+        {
+            macro.Name = editCopy.Name;
+            macro.Script = editCopy.Script;
+            _settingsService.Save();
+            RefreshMacroList();
+        }
+    }
+
+    private void MacroDeleteButton_Click(object sender, RoutedEventArgs e)
+    {
+        var index = MacroListBox.SelectedIndex;
+        if (index < 0 || index >= _settingsService.Settings.Macros.Count) return;
+
+        var name = _settingsService.Settings.Macros[index].Name;
+        var result = System.Windows.MessageBox.Show(
+            Loc.MacroDeleteConfirm(name),
+            "AutoPad",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            _settingsService.Settings.Macros.RemoveAt(index);
+            _settingsService.Save();
+            RefreshMacroList();
+        }
+    }
+
+    private void MacroMoveUpButton_Click(object sender, RoutedEventArgs e)
+    {
+        var index = MacroListBox.SelectedIndex;
+        if (index <= 0) return;
+
+        var macros = _settingsService.Settings.Macros;
+        (macros[index - 1], macros[index]) = (macros[index], macros[index - 1]);
+        _settingsService.Save();
+        RefreshMacroList();
+        MacroListBox.SelectedIndex = index - 1;
+    }
+
+    private void MacroMoveDownButton_Click(object sender, RoutedEventArgs e)
+    {
+        var index = MacroListBox.SelectedIndex;
+        var macros = _settingsService.Settings.Macros;
+        if (index < 0 || index >= macros.Count - 1) return;
+
+        (macros[index], macros[index + 1]) = (macros[index + 1], macros[index]);
+        _settingsService.Save();
+        RefreshMacroList();
+        MacroListBox.SelectedIndex = index + 1;
+    }
+
+    private void MacroPresetButton_Click(object sender, RoutedEventArgs e)
+    {
+        var existingNames = _settingsService.Settings.Macros.Select(m => m.Name).ToList();
+        var presetWindow = new MacroPresetWindow(existingNames, _settingsService.Settings.IsDarkMode)
+        {
+            Owner = this
+        };
+        presetWindow.ShowDialog();
+
+        if (presetWindow.SelectedMacros.Count > 0)
+        {
+            foreach (var macro in presetWindow.SelectedMacros)
+            {
+                _settingsService.Settings.Macros.Add(macro);
+            }
+            _settingsService.Save();
+            RefreshMacroList();
         }
     }
 }

@@ -77,10 +77,14 @@ public partial class EditWindow : Window
         RemoveBlankLinesButton.Content = Loc.BtnRemoveBlankLines;
         RemoveAllLinesButton.Content = Loc.BtnRemoveAllLines;
         ReplaceWhitespaceButton.Content = Loc.BtnReplaceWhitespace;
+        WhitespaceDeleteButton.Content = Loc.BtnWhitespaceDelete;
+        WhitespaceReplaceButton.Content = Loc.BtnWhitespaceReplaceSpace;
         TrimButton.Content = Loc.BtnTrim;
         MaskNumbersButton.Content = Loc.BtnMaskNumbers;
         UpperCaseButton.Content = Loc.BtnUpperCase;
         LowerCaseButton.Content = Loc.BtnLowerCase;
+        MacroButton.Content = Loc.BtnMacro;
+        MacroEmptyText.Text = Loc.MacroEmpty;
     }
 
     public EditWindow(string text, bool isDarkMode = true)
@@ -134,6 +138,8 @@ public partial class EditWindow : Window
         CopySelectedButton.Content = Loc.BtnCopySelection;
         CopySelectedButton.Visibility = Visibility.Collapsed;
         CopyAllButton.Content = Loc.BtnCopyClose;
+        Base64CopyButton.Content = Loc.BtnBase64Copy;
+        Base64CopyButton.Visibility = Visibility.Visible;
         SaveButton.Visibility = Visibility.Visible;
         
         KeyDown += EditWindow_KeyDown;
@@ -183,6 +189,8 @@ public partial class EditWindow : Window
                 
                 CopySelectedButton.Content = Loc.BtnCopySelection;
                 CopySelectedButton.Visibility = Visibility.Collapsed;
+                Base64CopyButton.Content = Loc.BtnBase64Copy;
+                Base64CopyButton.Visibility = Visibility.Visible;
                 SetupSelectionEvents();
                 SizeChanged += OnWindowSizeChanged;
             }
@@ -290,12 +298,14 @@ public partial class EditWindow : Window
         {
             _hasSelection = true;
             CopySelectedButton.Visibility = Visibility.Visible;
+            Base64CopyButton.Content = Loc.BtnBase64CopySelection;
         }
         else
         {
             _hasSelection = false;
             SelectionRectangle.Visibility = Visibility.Collapsed;
             CopySelectedButton.Visibility = Visibility.Collapsed;
+            Base64CopyButton.Content = Loc.BtnBase64Copy;
         }
     }
 
@@ -399,6 +409,10 @@ public partial class EditWindow : Window
         if (_isSelectMode)
         {
             CopySelectedButton.Visibility = Visibility.Collapsed;
+        }
+        if (_isImageMode)
+        {
+            Base64CopyButton.Content = Loc.BtnBase64Copy;
         }
     }
 
@@ -930,6 +944,44 @@ public partial class EditWindow : Window
         }
     }
 
+    private void Base64CopyButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_isImageMode || _originalImage == null) return;
+
+        BitmapSource source;
+        bool isSelection = false;
+
+        if (_hasSelection)
+        {
+            var finalImage = RenderImageWithDrawing();
+            var rect = GetImageSpaceSelectionRect();
+            int x = Math.Max(0, (int)rect.X);
+            int y = Math.Max(0, (int)rect.Y);
+            int w = Math.Min((int)rect.Width, finalImage.PixelWidth - x);
+            int h = Math.Min((int)rect.Height, finalImage.PixelHeight - y);
+            if (w <= 0 || h <= 0) return;
+            source = new CroppedBitmap(finalImage, new Int32Rect(x, y, w, h));
+            isSelection = true;
+        }
+        else
+        {
+            source = RenderImageWithDrawing();
+        }
+
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(source));
+        using var ms = new MemoryStream();
+        encoder.Save(ms);
+        var base64 = Convert.ToBase64String(ms.ToArray());
+        var dataUri = $"data:image/png;base64,{base64}";
+
+        SuppressClipboardMonitor = true;
+        WpfClipboard.SetText(dataUri);
+        SuppressClipboardMonitor = false;
+
+        ShowStatus(isSelection ? Loc.StatusBase64SelectionCopied : Loc.StatusBase64Copied);
+    }
+
     private void CopyAllButton_Click(object sender, RoutedEventArgs e)
     {
         if (_isImageMode && _originalImage != null)
@@ -1229,6 +1281,23 @@ public partial class EditWindow : Window
 
     private void ReplaceWhitespaceButton_Click(object sender, RoutedEventArgs e)
     {
+        WhitespacePopup.IsOpen = !WhitespacePopup.IsOpen;
+    }
+
+    private void WhitespaceDeleteButton_Click(object sender, RoutedEventArgs e)
+    {
+        WhitespacePopup.IsOpen = false;
+        ProcessSpecialWhitespace(replaceWithSpace: false);
+    }
+
+    private void WhitespaceReplaceButton_Click(object sender, RoutedEventArgs e)
+    {
+        WhitespacePopup.IsOpen = false;
+        ProcessSpecialWhitespace(replaceWithSpace: true);
+    }
+
+    private void ProcessSpecialWhitespace(bool replaceWithSpace)
+    {
         RemoveLinesPopup.IsOpen = false;
         var text = ContentTextBox.SelectionLength > 0 ? ContentTextBox.SelectedText : ContentTextBox.Text;
 
@@ -1251,6 +1320,8 @@ public partial class EditWindow : Window
             {
                 var name = $"U+{rune.Value:X4}";
                 counts[name] = counts.GetValueOrDefault(name) + 1;
+                if (replaceWithSpace)
+                    sb.Append(' ');
             }
             else
             {
@@ -1272,7 +1343,7 @@ public partial class EditWindow : Window
         var detail = string.Join("\n", counts.Select(kv => $"  {kv.Key}: {kv.Value}"));
         var total = counts.Values.Sum();
         System.Windows.MessageBox.Show(
-            Loc.MsgWhitespaceReplaced(total, detail),
+            replaceWithSpace ? Loc.MsgWhitespaceReplacedWithSpace(total, detail) : Loc.MsgWhitespaceReplaced(total, detail),
             "AutoPad", MessageBoxButton.OK, MessageBoxImage.Information);
         UpdateTitleMeta();
     }
@@ -1357,6 +1428,112 @@ public partial class EditWindow : Window
             ContentTextBox.Text = ContentTextBox.Text.ToLowerInvariant();
         UpdateTitleMeta();
         ShowStatus(Loc.StatusLowerCased);
+    }
+
+    // ── 매크로 ──
+
+    private void MacroButton_Click(object sender, RoutedEventArgs e)
+    {
+        BuildMacroPopup();
+        MacroPopup.IsOpen = !MacroPopup.IsOpen;
+        if (MacroPopup.IsOpen)
+        {
+            MacroSearchBox.Text = "";
+            MacroSearchBox.Focus();
+        }
+    }
+
+    private void MacroSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        FilterMacroPopup();
+    }
+
+    private void FilterMacroPopup()
+    {
+        var query = MacroSearchBox.Text.Trim();
+        int visibleCount = 0;
+
+        foreach (var child in MacroPopupPanel.Children)
+        {
+            if (child is WpfButton btn)
+            {
+                var name = btn.Content?.ToString() ?? "";
+                bool match = string.IsNullOrEmpty(query)
+                    || name.Contains(query, StringComparison.OrdinalIgnoreCase);
+                btn.Visibility = match ? Visibility.Visible : Visibility.Collapsed;
+                if (match) visibleCount++;
+            }
+        }
+
+        MacroEmptyText.Visibility = visibleCount == 0 ? Visibility.Visible : Visibility.Collapsed;
+        MacroEmptyText.Text = string.IsNullOrEmpty(query) ? Loc.MacroEmpty : Loc.MacroNoResults;
+    }
+
+    private void BuildMacroPopup()
+    {
+        // MacroEmptyText 이후의 동적 버튼 제거
+        while (MacroPopupPanel.Children.Count > 1)
+            MacroPopupPanel.Children.RemoveAt(MacroPopupPanel.Children.Count - 1);
+
+        var macros = App.SettingsService?.Settings.Macros;
+        if (macros == null || macros.Count == 0)
+        {
+            MacroEmptyText.Visibility = Visibility.Visible;
+            return;
+        }
+
+        MacroEmptyText.Visibility = Visibility.Collapsed;
+
+        foreach (var macro in macros)
+        {
+            var btn = new WpfButton
+            {
+                Content = macro.Name,
+                Tag = macro.Id,
+                Background = System.Windows.Media.Brushes.Transparent,
+                Foreground = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0xE0, 0xE0, 0xE0)),
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(12, 6, 12, 6),
+                HorizontalContentAlignment = System.Windows.HorizontalAlignment.Left,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                FontSize = 12
+            };
+            btn.Click += MacroItem_Click;
+            MacroPopupPanel.Children.Add(btn);
+        }
+    }
+
+    private void MacroItem_Click(object sender, RoutedEventArgs e)
+    {
+        MacroPopup.IsOpen = false;
+        if (sender is not WpfButton btn) return;
+        var macroId = btn.Tag?.ToString();
+        if (macroId == null) return;
+
+        var macro = App.SettingsService?.Settings.Macros.Find(m => m.Id == macroId);
+        if (macro == null) return;
+
+        var text = ContentTextBox.SelectionLength > 0 ? ContentTextBox.SelectedText : ContentTextBox.Text;
+
+        try
+        {
+            var result = MacroService.RunMacro(macro.Script, text);
+
+            if (ContentTextBox.SelectionLength > 0)
+                ReplaceSelection(result);
+            else
+                ContentTextBox.Text = result;
+
+            UpdateTitleMeta();
+            ShowStatus(Loc.MacroApplied(macro.Name));
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(
+                Loc.MacroRunError(macro.Name, ex.Message),
+                "AutoPad", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     // ── URL 호버 버튼 ──

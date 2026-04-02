@@ -70,6 +70,10 @@ public static class Loc
     public static string BtnSaveFile => Get("Save", "저장");
     public static string BtnCopySelection => Get("Copy Selection", "선택 영역 복사");
     public static string BtnCopyClose => Get("Copy & Close", "복사 후 닫기");
+    public static string BtnBase64Copy => Get("Base64 Copy", "Base64 복사");
+    public static string BtnBase64CopySelection => Get("Base64 Copy Selection", "선택 영역 Base64 복사");
+    public static string StatusBase64Copied => Get("Base64 copied to clipboard", "Base64가 클립보드에 복사되었습니다");
+    public static string StatusBase64SelectionCopied => Get("Selection Base64 copied to clipboard", "선택 영역 Base64가 클립보드에 복사되었습니다");
     public static string StatusFilled => Get("Filled selection", "선택 영역을 채웠습니다");
     public static string StatusMosaic => Get("Applied mosaic", "모자이크를 적용했습니다");
     public static string StatusErased => Get("Removed selection", "선택 영역을 제거했습니다");
@@ -91,15 +95,22 @@ public static class Loc
     public static string BtnRemoveBlankLines => Get("Blank Lines", "공백 라인 제거");
     public static string BtnRemoveAllLines => Get("All Lines", "모든 라인 제거");
     public static string BtnReplaceWhitespace => Get("Remove Special Whitespace", "특수공백 제거");
+    public static string BtnWhitespaceDelete => Get("Delete", "삭제");
+    public static string BtnWhitespaceReplaceSpace => Get("Replace with Space", "공백으로 치환");
     public static string BtnTrim => Get("TRIM", "앞뒤 공백 제거");
     public static string BtnMaskNumbers => Get("Mask Numbers", "숫자 마스킹");
     public static string BtnUpperCase => Get("UPPER", "대문자");
     public static string BtnLowerCase => Get("lower", "소문자");
+    public static string BtnMacro => Get("Macro", "매크로");
+    public static string MacroEmpty => Get("No macros", "매크로 없음");
+    public static string MacroNoResults => Get("No results", "검색 결과 없음");
     public static string StatusBlankLinesRemoved => Get("Blank lines removed", "공백 라인을 제거했습니다");
     public static string StatusAllLinesRemoved => Get("All line breaks removed", "모든 줄바꾼을 제거했습니다");
     public static string StatusNoWhitespaceFound => Get("No special whitespace found", "특수 공백이 없습니다");
     public static string MsgWhitespaceReplaced(int total, string detail)
         => Get($"Removed {total} non-ASCII whitespace(s):\n{detail}", $"비ASCII 공백 {total}개 제거:\n{detail}");
+    public static string MsgWhitespaceReplacedWithSpace(int total, string detail)
+        => Get($"Replaced {total} non-ASCII whitespace(s) with space:\n{detail}", $"비ASCII 공백 {total}개를 공백으로 치환:\n{detail}");
     public static string StatusTrimmed => Get("Lines trimmed", "라인 앞뒤 공백을 제거했습니다");
     public static string StatusNoNumbersFound => Get("No numbers found", "숫자가 없습니다");
     public static string MsgNumbersMasked(int count)
@@ -164,6 +175,51 @@ public static class Loc
     public static string HistoryCount(int count) => Get($"{count} item(s)", $"{count}개 항목");
     public static string SettingsEnableHistory => Get("Enable Clipboard History", "클립보드 히스토리 활성화");
     public static string SettingsHistorySize => Get("History Size:", "히스토리 개수:");
+
+    // ── Macro ──
+    public static string SettingsTabMacro => Get("Macro", "매크로");
+    public static string MacroDescription => Get("JavaScript macros for text transformation", "텍스트 변환을 위한 JavaScript 매크로");
+    public static string MacroDeleteConfirm(string name) => Get($"Delete macro \"{name}\"?", $"매크로 \"{name}\"을(를) 삭제하시겠습니까?");
+    public static string MacroEditorTitle => Get("AutoPad - Macro Editor", "AutoPad - 매크로 편집기");
+    public static string MacroEditorName => Get("Name", "이름");
+    public static string MacroEditorScript => Get("Script (JavaScript)", "스크립트 (JavaScript)");
+    public static string MacroEditorTestInput => Get("Test Input", "테스트 입력");
+    public static string MacroEditorTestOutput => Get("Output", "결과");
+    public static string MacroEditorRunTest => Get("Run Test", "테스트 실행");
+    public static string MacroEditorCancel => Get("Cancel", "취소");
+    public static string MacroEditorSave => Get("Save", "저장");
+    public static string MacroEditorNameRequired => Get("Name is required.", "이름을 입력해주세요.");
+    public static string MacroEditorScriptError(string msg) => Get($"Script error: {msg}", $"스크립트 오류: {msg}");
+    public static string MacroMustReturnString => Get("Macro must return a string.", "매크로는 문자열을 반환해야 합니다.");
+    public static string MacroTimeout => Get("Macro timed out.", "매크로 실행 시간이 초과되었습니다.");
+    public static string MacroMemoryLimit => Get("Macro exceeded memory limit.", "매크로가 메모리 제한을 초과했습니다.");
+    public static string MacroStatementLimit => Get("Macro exceeded statement limit.", "매크로가 구문 실행 제한을 초과했습니다.");
+    public static string MacroApplied(string name) => Get($"Macro \"{name}\" applied", $"매크로 \"{name}\" 적용됨");
+    public static string MacroRunError(string name, string msg) => Get($"Macro \"{name}\" failed:\n{msg}", $"매크로 \"{name}\" 실패:\n{msg}");
+
+    // ── Macro Presets ──
+    public static string MacroPresetBtn => Get("Presets", "프리셋");
+    public static string MacroPresetTitle => Get("AutoPad - Macro Presets", "AutoPad - 매크로 프리셋");
+    public static string MacroPresetHeader => Get("Macro Presets", "매크로 프리셋");
+    public static string MacroPresetDesc => Get("Select presets to add to your macros", "추가할 프리셋을 선택하세요");
+    public static string MacroPresetAdd => Get("Add Selected", "선택 항목 추가");
+    public static string MacroPresetAlreadyAdded => Get("Already added", "이미 추가됨");
+    public static string MacroPresetSelected(int count) => Get($"{count} selected", $"{count}개 선택됨");
+
+    // ── Preset Names ──
+    public static string PresetPhoneMask => Get("Phone Number Mask", "전화번호 마스킹");
+    public static string PresetEmailMask => Get("Email Mask", "이메일 마스킹");
+    public static string PresetCreditCardMask => Get("Credit Card Mask", "카드번호 마스킹");
+    public static string PresetIpAddressMask => Get("IP Address Mask", "IP 주소 마스킹");
+    public static string PresetJsonFormat => Get("JSON Format (Pretty)", "JSON 포맷 (보기 좋게)");
+    public static string PresetJsonMinify => Get("JSON Minify", "JSON 압축");
+    public static string PresetRemoveDuplicateLines => Get("Remove Duplicate Lines", "중복 라인 제거");
+    public static string PresetSortLines => Get("Sort Lines", "라인 정렬");
+    public static string PresetCamelToSnake => Get("camelCase → snake_case", "camelCase → snake_case");
+    public static string PresetSnakeToCamel => Get("snake_case → camelCase", "snake_case → camelCase");
+    public static string PresetMarkdownTable => Get("CSV/TSV → Markdown Table", "CSV/TSV → 마크다운 테이블");
+    public static string PresetBase64Encode => Get("Base64 Encode", "Base64 인코딩");
+    public static string PresetBase64Decode => Get("Base64 Decode", "Base64 디코딩");
 
     // ── Size formatting ──
     public static string FormatSize(long bytes)

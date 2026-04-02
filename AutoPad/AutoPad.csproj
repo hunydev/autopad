@@ -25,4 +25,8 @@
     <Resource Include="Resources\icon.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Jint" Version="4.2.1" />
+  </ItemGroup>
+
 </Project>

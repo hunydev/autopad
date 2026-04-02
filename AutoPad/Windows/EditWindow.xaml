@@ -286,6 +286,15 @@
                         Click="ReplaceWhitespaceButton_Click"
                         Width="Auto" Height="30" Padding="12,4" Margin="4,0,0,0" FontSize="12" Foreground="#E0E0E0"/>
                 
+                <Rectangle Width="1" Fill="#3F3F46" Margin="6,4"/>
+                
+                <!-- 매크로 버튼 -->
+                <Button x:Name="MacroButton"
+                        Style="{StaticResource ToolButton}"
+                        Content="Macro"
+                        Click="MacroButton_Click"
+                        Width="Auto" Height="30" Padding="12,4" Margin="4,0,0,0" FontSize="12" Foreground="#E0E0E0"/>
+                
                 <Button x:Name="TrimButton"
                         Style="{StaticResource ToolButton}"
                         Content="TRIM"
@@ -372,6 +381,83 @@
                             Background="Transparent" Foreground="#E0E0E0" BorderThickness="0"
                             Padding="12,6" HorizontalContentAlignment="Left" Cursor="Hand" FontSize="12"/>
                 </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- 특수공백 드롭다운 (Popup) -->
+        <Popup x:Name="WhitespacePopup"
+               PlacementTarget="{Binding ElementName=ReplaceWhitespaceButton}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True">
+            <Border Background="#333337"
+                    CornerRadius="4"
+                    Padding="2"
+                    BorderBrush="#555555"
+                    BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" Opacity="0.4" ShadowDepth="2"/>
+                </Border.Effect>
+                <StackPanel>
+                    <Button x:Name="WhitespaceDeleteButton"
+                            Content="삭제"
+                            Click="WhitespaceDeleteButton_Click"
+                            Background="Transparent" Foreground="#E0E0E0" BorderThickness="0"
+                            Padding="12,6" HorizontalContentAlignment="Left" Cursor="Hand" FontSize="12"/>
+                    <Button x:Name="WhitespaceReplaceButton"
+                            Content="공백으로 치환"
+                            Click="WhitespaceReplaceButton_Click"
+                            Background="Transparent" Foreground="#E0E0E0" BorderThickness="0"
+                            Padding="12,6" HorizontalContentAlignment="Left" Cursor="Hand" FontSize="12"/>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- 매크로 드롭다운 (Popup) -->
+        <Popup x:Name="MacroPopup"
+               PlacementTarget="{Binding ElementName=MacroButton}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True">
+            <Border Background="#333337"
+                    CornerRadius="4"
+                    Padding="2"
+                    BorderBrush="#555555"
+                    BorderThickness="1"
+                    MinWidth="180"
+                    MaxHeight="320">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" Opacity="0.4" ShadowDepth="2"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <!-- 검색 -->
+                    <TextBox x:Name="MacroSearchBox"
+                             Grid.Row="0"
+                             Background="#2D2D30"
+                             Foreground="#E0E0E0"
+                             BorderBrush="#3F3F46"
+                             BorderThickness="0,0,0,1"
+                             Padding="8,6"
+                             FontSize="12"
+                             CaretBrush="White"
+                             TextChanged="MacroSearchBox_TextChanged"/>
+                    <!-- 목록 -->
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  MaxHeight="280">
+                        <StackPanel x:Name="MacroPopupPanel">
+                            <TextBlock x:Name="MacroEmptyText"
+                                       Text="No macros"
+                                       Foreground="#888888"
+                                       FontSize="12"
+                                       Padding="12,6"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
             </Border>
         </Popup>
         
@@ -648,6 +734,13 @@
                         Content="선택 영역 복사"
                         Style="{StaticResource SecondaryButton}"
                         Click="CopySelectedButton_Click"
+                        Margin="0,0,8,0"/>
+                
+                <Button x:Name="Base64CopyButton"
+                        Content="Base64 복사"
+                        Style="{StaticResource SecondaryButton}"
+                        Click="Base64CopyButton_Click"
+                        Visibility="Collapsed"
                         Margin="0,0,8,0"/>
                 
                 <Button x:Name="CopyAllButton"

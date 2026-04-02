@@ -74,6 +74,11 @@ public class AppSettings
     /// 히스토리 최대 저장 개수
     /// </summary>
     public int HistoryMaxItems { get; set; } = 50;
+
+    /// <summary>
+    /// 매크로 목록
+    /// </summary>
+    public List<MacroItem> Macros { get; set; } = new();
 }
 
 public enum ToastPosition
