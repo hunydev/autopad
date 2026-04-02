@@ -85,6 +85,7 @@ public partial class EditWindow : Window
         LowerCaseButton.Content = Loc.BtnLowerCase;
         MacroButton.Content = Loc.BtnMacro;
         MacroEmptyText.Text = Loc.MacroEmpty;
+        PinButtonText.Text = Loc.BtnPin;
     }
 
     private void ApplySpellCheck()
@@ -309,6 +310,7 @@ public partial class EditWindow : Window
             _hasSelection = true;
             CopySelectedButton.Visibility = Visibility.Visible;
             Base64CopyButton.Content = Loc.BtnBase64CopySelection;
+            PinButtonText.Text = Loc.BtnPinSelection;
         }
         else
         {
@@ -423,6 +425,7 @@ public partial class EditWindow : Window
         if (_isImageMode)
         {
             Base64CopyButton.Content = Loc.BtnBase64Copy;
+            PinButtonText.Text = Loc.BtnPin;
         }
     }
 
@@ -992,6 +995,47 @@ public partial class EditWindow : Window
         ShowStatus(isSelection ? Loc.StatusBase64SelectionCopied : Loc.StatusBase64Copied);
     }
 
+    private void PinButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isImageMode && _originalImage != null)
+        {
+            BitmapSource pinImage;
+            if (_hasSelection)
+            {
+                var finalImage = RenderImageWithDrawing();
+                var rect = GetImageSpaceSelectionRect();
+                int x = Math.Max(0, (int)rect.X);
+                int y = Math.Max(0, (int)rect.Y);
+                int w = Math.Min((int)rect.Width, finalImage.PixelWidth - x);
+                int h = Math.Min((int)rect.Height, finalImage.PixelHeight - y);
+                if (w <= 0 || h <= 0) return;
+                pinImage = new CroppedBitmap(finalImage, new Int32Rect(x, y, w, h));
+            }
+            else
+            {
+                pinImage = RenderImageWithDrawing();
+            }
+            var sticky = new StickyWindow(pinImage);
+            sticky.Show();
+        }
+        else
+        {
+            string pinText;
+            if (!string.IsNullOrEmpty(ContentTextBox.SelectedText))
+            {
+                pinText = ContentTextBox.SelectedText;
+            }
+            else
+            {
+                pinText = ContentTextBox.Text;
+            }
+            if (string.IsNullOrEmpty(pinText)) return;
+            var sticky = new StickyWindow(pinText);
+            sticky.Show();
+        }
+        Close();
+    }
+
     private void CopyAllButton_Click(object sender, RoutedEventArgs e)
     {
         if (_isImageMode && _originalImage != null)
@@ -1230,6 +1274,7 @@ public partial class EditWindow : Window
             var byteSize = Encoding.UTF8.GetByteCount(fullText);
             var lineCount = fullText.Split('\n').Length;
             SelectionInfoText.Text = Loc.SelectionInfoFull(runeCount, FormatSize(byteSize), lineCount);
+            PinButtonText.Text = Loc.BtnPin;
         }
         else
         {
@@ -1237,6 +1282,7 @@ public partial class EditWindow : Window
             var byteSize = Encoding.UTF8.GetByteCount(selected);
             var lineCount = selected.Split('\n').Length;
             SelectionInfoText.Text = Loc.SelectionInfoSelected(runeCount, FormatSize(byteSize), lineCount);
+            PinButtonText.Text = Loc.BtnPinSelection;
         }
     }
 

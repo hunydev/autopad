@@ -724,6 +724,13 @@
                            VerticalAlignment="Center"
                            Margin="0,0,16,0"/>
                 
+                <Button x:Name="PinButton"
+                        Style="{StaticResource SecondaryButton}"
+                        Click="PinButton_Click"
+                        Margin="0,0,8,0">
+                    <TextBlock x:Name="PinButtonText" Text="Pin" VerticalAlignment="Center"/>
+                </Button>
+                
                 <Button x:Name="SaveButton"
                         Content="저장"
                         Style="{StaticResource SecondaryButton}"

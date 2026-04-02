@@ -9,7 +9,7 @@
   <Identity
     Name="hunydev.AutoPad"
     Publisher="CN=703E5157-11D2-4C1C-B93B-D47F4E0CA539"
-    Version="1.0.6.0"
+    Version="1.1.0.0"
     ProcessorArchitecture="x64" />
 
   <Properties>

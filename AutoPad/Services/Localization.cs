@@ -72,6 +72,12 @@ public static class Loc
     public static string BtnCopyClose => Get("Copy & Close", "복사 후 닫기");
     public static string BtnBase64Copy => Get("Base64 Copy", "Base64 복사");
     public static string BtnBase64CopySelection => Get("Base64 Copy Selection", "선택 영역 Base64 복사");
+    public static string BtnPin => Get("Pin", "고정");
+    public static string BtnPinSelection => Get("Pin Selection", "선택 영역 고정");
+    public static string StickyTitleText(int chars) => Get($"Sticky — {chars} chars", $"스티커 — {chars}자");
+    public static string StickyTitleImage(int w, int h) => Get($"Sticky — {w}×{h}", $"스티커 — {w}×{h}");
+    public static string StickyEdit => Get("Edit", "편집");
+    public static string StickyTopMost => Get("Always on top", "항상 위");
     public static string StatusBase64Copied => Get("Base64 copied to clipboard", "Base64가 클립보드에 복사되었습니다");
     public static string StatusBase64SelectionCopied => Get("Selection Base64 copied to clipboard", "선택 영역 Base64가 클립보드에 복사되었습니다");
     public static string StatusFilled => Get("Filled selection", "선택 영역을 채웠습니다");
