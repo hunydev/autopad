@@ -636,26 +636,43 @@
         </Border>
         
         <!-- 텍스트 편집 영역 -->
-        <TextBox x:Name="ContentTextBox"
-                 Grid.Row="3"
-                 AcceptsReturn="True"
-                 AcceptsTab="True"
-                 TextWrapping="Wrap"
-                 VerticalScrollBarVisibility="Auto"
-                 HorizontalScrollBarVisibility="Auto"
-                 Background="#2D2D30"
-                 Foreground="#E0E0E0"
-                 BorderBrush="#3F3F46"
-                 BorderThickness="1"
-                 Padding="12"
-                 FontFamily="Consolas"
-                 FontSize="14"
-                 CaretBrush="White"
-                 SelectionBrush="#0078D4">
-            <TextBox.Resources>
-                <Style TargetType="ScrollBar" BasedOn="{StaticResource DarkScrollBar}"/>
-            </TextBox.Resources>
-        </TextBox>
+        <Grid Grid.Row="3">
+            <TextBox x:Name="ContentTextBox"
+                     AcceptsReturn="True"
+                     AcceptsTab="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     Background="#2D2D30"
+                     Foreground="#E0E0E0"
+                     BorderBrush="#3F3F46"
+                     BorderThickness="1"
+                     Padding="12"
+                     FontFamily="Consolas"
+                     FontSize="14"
+                     CaretBrush="White"
+                     SelectionBrush="#0078D4">
+                <TextBox.Resources>
+                    <Style TargetType="ScrollBar" BasedOn="{StaticResource DarkScrollBar}"/>
+                </TextBox.Resources>
+            </TextBox>
+
+            <Border x:Name="TextLoadingOverlay"
+                    Background="#B01E1E1E"
+                    BorderBrush="#3F3F46"
+                    BorderThickness="1"
+                    Visibility="Collapsed">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="260">
+                    <ProgressBar IsIndeterminate="True" Height="4" Margin="0,0,0,10"/>
+                    <TextBlock x:Name="TextLoadingMessage"
+                               Text="Loading..."
+                               Foreground="#E0E0E0"
+                               FontSize="12"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+        </Grid>
         
         <!-- 이미지 편집 영역 -->
         <Border x:Name="ImageContainer"

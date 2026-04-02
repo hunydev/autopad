@@ -3,6 +3,8 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Ink;
@@ -35,6 +37,10 @@ public partial class EditWindow : Window
     private readonly StrokeCollection _undoStack = new();
     private Encoding _currentEncoding = Encoding.UTF8;
     private bool _isFitToWindow = false;
+    private CancellationTokenSource? _textLoadCts;
+
+    private const int AsyncTextThresholdChars = 256 * 1024;
+    private const int TextAppendChunkSize = 128 * 1024;
 
     // 영역 선택 관련
     private bool _isSelecting = false;
@@ -86,6 +92,7 @@ public partial class EditWindow : Window
         MacroButton.Content = Loc.BtnMacro;
         MacroEmptyText.Text = Loc.MacroEmpty;
         PinButtonText.Text = Loc.BtnPin;
+        TextLoadingMessage.Text = Loc.LoadingText;
     }
 
     private void ApplySpellCheck()
@@ -101,24 +108,30 @@ public partial class EditWindow : Window
         InitializeComponent();
         ApplyLocalization();
         _isImageMode = false;
+        Closed += (_, _) => _textLoadCts?.Cancel();
         
         Icon = IconHelper.CreateAppIconImageSource(32);
         SourceInitialized += (s, e) => ThemeHelper.ApplyDarkTitleBar(this, isDarkMode);
-        
-        ContentTextBox.Text = text;
-        ContentTextBox.Focus();
-        ContentTextBox.SelectAll();
+
         ContentTextBox.SelectionChanged += ContentTextBox_SelectionChanged;
         ContentTextBox.PreviewMouseMove += ContentTextBox_PreviewMouseMove;
         ContentTextBox.MouseLeave += ContentTextBox_MouseLeave;
         
         TextToolbar.Visibility = Visibility.Visible;
         ApplySpellCheck();
-        
-        var lineCount = text.Split('\n').Length;
-        var byteSize = Encoding.UTF8.GetByteCount(text);
-        var runeCount = text.EnumerateRunes().Count();
-        Title = Loc.EditTitle(runeCount, FormatSize(byteSize), lineCount);
+
+        if (text.Length >= AsyncTextThresholdChars)
+        {
+            Title = "AutoPad - Edit";
+            _ = LoadTextAsync(
+                loader: ct => Task.Run(() => BuildTextLoadResult(text, Encoding.UTF8, ct), ct),
+                loadingMessage: Loc.LoadingText,
+                focusAndSelectAll: true);
+        }
+        else
+        {
+            ApplyLoadedText(text, BuildTextMeta(text, Encoding.UTF8), true);
+        }
         
         CopySelectedButton.Content = Loc.BtnCopySelection;
         SaveButton.Visibility = Visibility.Visible;
@@ -162,6 +175,7 @@ public partial class EditWindow : Window
         InitializeComponent();
         ApplyLocalization();
         _sourceFilePath = filePath;
+        Closed += (_, _) => _textLoadCts?.Cancel();
         
         Icon = IconHelper.CreateAppIconImageSource(32);
         SourceInitialized += (s, e) => ThemeHelper.ApplyDarkTitleBar(this, isDarkMode);
@@ -208,19 +222,24 @@ public partial class EditWindow : Window
             {
                 ShowStatus(Loc.ImageLoadFailed(ex.Message));
                 _isImageMode = false;
-                LoadFileAsText(filePath);
+                _ = LoadTextAsync(
+                    loader: ct => Task.Run(() => BuildTextLoadResultFromFile(filePath, _currentEncoding, ct), ct),
+                    loadingMessage: Loc.LoadingFile(Path.GetFileName(filePath)));
             }
         }
         else
         {
             _isImageMode = false;
-            LoadFileAsText(filePath);
             EncodingToolbar.Visibility = Visibility.Visible;
             TextToolbar.Visibility = Visibility.Visible;
             ApplySpellCheck();
             ContentTextBox.SelectionChanged += ContentTextBox_SelectionChanged;
             ContentTextBox.PreviewMouseMove += ContentTextBox_PreviewMouseMove;
             ContentTextBox.MouseLeave += ContentTextBox_MouseLeave;
+
+            _ = LoadTextAsync(
+                loader: ct => Task.Run(() => BuildTextLoadResultFromFile(filePath, _currentEncoding, ct), ct),
+                loadingMessage: Loc.LoadingFile(Path.GetFileName(filePath)));
         }
         
         SaveButton.Visibility = Visibility.Visible;
@@ -321,23 +340,160 @@ public partial class EditWindow : Window
         }
     }
 
-    private void LoadFileAsText(string filePath)
+    private sealed class TextMeta
+    {
+        public int RuneCount { get; init; }
+        public int ByteSize { get; init; }
+        public int LineCount { get; init; }
+    }
+
+    private sealed class TextLoadResult
+    {
+        public string Text { get; init; } = string.Empty;
+        public TextMeta Meta { get; init; } = new();
+        public string? Error { get; init; }
+    }
+
+    private TextMeta BuildTextMeta(string text, Encoding encoding)
+    {
+        var lineCount = 1;
+        foreach (var ch in text)
+        {
+            if (ch == '\n') lineCount++;
+        }
+
+        return new TextMeta
+        {
+            RuneCount = text.EnumerateRunes().Count(),
+            ByteSize = encoding.GetByteCount(text),
+            LineCount = lineCount
+        };
+    }
+
+    private TextLoadResult BuildTextLoadResult(string text, Encoding encoding, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var meta = BuildTextMeta(text, encoding);
+        return new TextLoadResult { Text = text, Meta = meta };
+    }
+
+    private TextLoadResult BuildTextLoadResultFromFile(string filePath, Encoding encoding, CancellationToken ct)
     {
         try
         {
+            ct.ThrowIfCancellationRequested();
+
+            if (!File.Exists(filePath))
+            {
+                return new TextLoadResult { Error = Loc.FileNotFound };
+            }
+
             var bytes = File.ReadAllBytes(filePath);
-            ContentTextBox.Text = _currentEncoding.GetString(bytes);
-            ContentTextBox.Focus();
+            ct.ThrowIfCancellationRequested();
+
+            var text = encoding.GetString(bytes);
+            ct.ThrowIfCancellationRequested();
+
+            var meta = BuildTextMeta(text, encoding);
+            return new TextLoadResult { Text = text, Meta = meta };
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
-            ContentTextBox.Text = Loc.FileReadFailed(ex.Message);
+            return new TextLoadResult { Error = Loc.FileReadFailed(ex.Message) };
+        }
+    }
+
+    private void SetTextLoadingState(bool isLoading, string? loadingMessage = null)
+    {
+        TextLoadingOverlay.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
+        if (!string.IsNullOrWhiteSpace(loadingMessage))
+        {
+            TextLoadingMessage.Text = loadingMessage;
+        }
+
+        TextToolbar.IsEnabled = !isLoading;
+        EncodingToolbar.IsEnabled = !isLoading;
+        CopyAllButton.IsEnabled = !isLoading;
+        CopySelectedButton.IsEnabled = !isLoading;
+        SaveButton.IsEnabled = !isLoading;
+        PinButton.IsEnabled = !isLoading;
+    }
+
+    private async Task ApplyTextInChunksAsync(string text, CancellationToken ct)
+    {
+        ContentTextBox.Clear();
+        if (string.IsNullOrEmpty(text)) return;
+
+        for (var i = 0; i < text.Length; i += TextAppendChunkSize)
+        {
+            ct.ThrowIfCancellationRequested();
+            var len = Math.Min(TextAppendChunkSize, text.Length - i);
+            ContentTextBox.AppendText(text.Substring(i, len));
+            await Dispatcher.Yield(DispatcherPriority.Background);
+        }
+    }
+
+    private void ApplyLoadedText(string text, TextMeta meta, bool selectAll)
+    {
+        ContentTextBox.Text = text;
+        Title = Loc.EditTitle(meta.RuneCount, FormatSize(meta.ByteSize), meta.LineCount);
+        ContentTextBox.Focus();
+        if (selectAll)
+        {
+            ContentTextBox.SelectAll();
+        }
+    }
+
+    private async Task LoadTextAsync(Func<CancellationToken, Task<TextLoadResult>> loader, string loadingMessage, bool focusAndSelectAll = false)
+    {
+        _textLoadCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _textLoadCts = cts;
+
+        SetTextLoadingState(true, loadingMessage);
+
+        try
+        {
+            await Dispatcher.Yield(DispatcherPriority.Background);
+            var result = await loader(cts.Token);
+
+            if (!ReferenceEquals(_textLoadCts, cts)) return;
+
+            if (!string.IsNullOrEmpty(result.Error))
+            {
+                ContentTextBox.Text = result.Error;
+                return;
+            }
+
+            await ApplyTextInChunksAsync(result.Text, cts.Token);
+            Title = Loc.EditTitle(result.Meta.RuneCount, FormatSize(result.Meta.ByteSize), result.Meta.LineCount);
+            ContentTextBox.Focus();
+            if (focusAndSelectAll)
+            {
+                ContentTextBox.SelectAll();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 최신 요청으로 교체될 수 있어 취소는 정상 동작이다.
+        }
+        finally
+        {
+            if (ReferenceEquals(_textLoadCts, cts))
+            {
+                SetTextLoadingState(false);
+                _textLoadCts = null;
+            }
         }
     }
 
     private bool _isChangingEncoding = false;
 
-    private void EncodingComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void EncodingComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded || _sourceFilePath == null) return;
         if (_isChangingEncoding) return;
@@ -350,16 +506,11 @@ public partial class EditWindow : Window
                 var tag = item.Tag?.ToString();
                 var encoding = tag == "EUCKR" ? Encoding.GetEncoding(949) : Encoding.UTF8;
                 _currentEncoding = encoding;
-                
+
                 var filePath = _sourceFilePath;
-                if (!File.Exists(filePath))
-                {
-                    ContentTextBox.Text = Loc.FileNotFound;
-                    return;
-                }
-                
-                var bytes = File.ReadAllBytes(filePath);
-                ContentTextBox.Text = encoding.GetString(bytes);
+                await LoadTextAsync(
+                    loader: ct => Task.Run(() => BuildTextLoadResultFromFile(filePath, encoding, ct), ct),
+                    loadingMessage: Loc.LoadingFile(Path.GetFileName(filePath)));
             }
         }
         catch (Exception ex)

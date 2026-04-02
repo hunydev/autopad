@@ -93,6 +93,8 @@ public static class Loc
     public static string StatusSelCopiedImage(int w, int h)
         => Get($"Selection copied ({w}x{h} px)", $"선택 영역 복사됨 ({w}x{h} px)");
     public static string ImageLoadFailed(string msg) => Get($"Image load failed: {msg}", $"이미지 로드 실패: {msg}");
+    public static string LoadingText => Get("Loading text...", "텍스트 로딩 중...");
+    public static string LoadingFile(string fileName) => Get($"Loading file: {fileName}", $"파일 로딩 중: {fileName}");
     public static string FileNotFound => Get("File does not exist.", "파일이 존재하지 않습니다.");
     public static string FileReadFailed(string msg) => Get($"Cannot read file: {msg}", $"파일을 읽을 수 없습니다: {msg}");
 
