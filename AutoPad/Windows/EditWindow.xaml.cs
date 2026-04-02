@@ -93,6 +93,9 @@ public partial class EditWindow : Window
         MacroEmptyText.Text = Loc.MacroEmpty;
         PinButtonText.Text = Loc.BtnPin;
         TextLoadingMessage.Text = Loc.LoadingText;
+        BinaryWarningTitle.Text = Loc.BinaryWarningTitle;
+        BinaryWarningDesc.Text = Loc.BinaryWarningDesc;
+        ViewAsTextButtonText.Text = Loc.BtnViewAsText;
     }
 
     private void ApplySpellCheck()
@@ -352,6 +355,7 @@ public partial class EditWindow : Window
         public string Text { get; init; } = string.Empty;
         public TextMeta Meta { get; init; } = new();
         public string? Error { get; init; }
+        public bool IsBinary { get; init; }
     }
 
     private TextMeta BuildTextMeta(string text, Encoding encoding)
@@ -377,6 +381,16 @@ public partial class EditWindow : Window
         return new TextLoadResult { Text = text, Meta = meta };
     }
 
+    private static bool IsBinaryContent(byte[] bytes)
+    {
+        var checkLength = Math.Min(bytes.Length, 8192);
+        for (var i = 0; i < checkLength; i++)
+        {
+            if (bytes[i] == 0x00) return true;
+        }
+        return false;
+    }
+
     private TextLoadResult BuildTextLoadResultFromFile(string filePath, Encoding encoding, CancellationToken ct)
     {
         try
@@ -390,6 +404,11 @@ public partial class EditWindow : Window
 
             var bytes = File.ReadAllBytes(filePath);
             ct.ThrowIfCancellationRequested();
+
+            if (IsBinaryContent(bytes))
+            {
+                return new TextLoadResult { IsBinary = true };
+            }
 
             var text = encoding.GetString(bytes);
             ct.ThrowIfCancellationRequested();
@@ -448,6 +467,9 @@ public partial class EditWindow : Window
         }
     }
 
+    private Func<CancellationToken, Task<TextLoadResult>>? _pendingBinaryLoader;
+    private bool _pendingBinaryFocusAndSelectAll;
+
     private async Task LoadTextAsync(Func<CancellationToken, Task<TextLoadResult>> loader, string loadingMessage, bool focusAndSelectAll = false)
     {
         _textLoadCts?.Cancel();
@@ -462,6 +484,15 @@ public partial class EditWindow : Window
             var result = await loader(cts.Token);
 
             if (!ReferenceEquals(_textLoadCts, cts)) return;
+
+            if (result.IsBinary)
+            {
+                _pendingBinaryLoader = loader;
+                _pendingBinaryFocusAndSelectAll = focusAndSelectAll;
+                SetTextLoadingState(false);
+                ShowBinaryWarning(true);
+                return;
+            }
 
             if (!string.IsNullOrEmpty(result.Error))
             {
@@ -488,6 +519,52 @@ public partial class EditWindow : Window
                 SetTextLoadingState(false);
                 _textLoadCts = null;
             }
+        }
+    }
+
+    private void ShowBinaryWarning(bool show)
+    {
+        BinaryWarningOverlay.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        ContentTextBox.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private async void ViewAsTextButton_Click(object sender, RoutedEventArgs e)
+    {
+        ShowBinaryWarning(false);
+        if (_pendingBinaryLoader == null || _sourceFilePath == null) return;
+
+        var filePath = _sourceFilePath;
+        var encoding = _currentEncoding;
+        var focusAndSelectAll = _pendingBinaryFocusAndSelectAll;
+        _pendingBinaryLoader = null;
+
+        await LoadTextAsync(
+            loader: ct => Task.Run(() => BuildTextLoadResultFromFileForce(filePath, encoding, ct), ct),
+            loadingMessage: Loc.LoadingFile(Path.GetFileName(filePath)),
+            focusAndSelectAll: focusAndSelectAll);
+    }
+
+    private TextLoadResult BuildTextLoadResultFromFileForce(string filePath, Encoding encoding, CancellationToken ct)
+    {
+        try
+        {
+            ct.ThrowIfCancellationRequested();
+            if (!File.Exists(filePath))
+                return new TextLoadResult { Error = Loc.FileNotFound };
+
+            var bytes = File.ReadAllBytes(filePath);
+            ct.ThrowIfCancellationRequested();
+
+            var text = encoding.GetString(bytes);
+            ct.ThrowIfCancellationRequested();
+
+            var meta = BuildTextMeta(text, encoding);
+            return new TextLoadResult { Text = text, Meta = meta };
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            return new TextLoadResult { Error = Loc.FileReadFailed(ex.Message) };
         }
     }
 

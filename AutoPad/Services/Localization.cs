@@ -97,6 +97,9 @@ public static class Loc
     public static string LoadingFile(string fileName) => Get($"Loading file: {fileName}", $"파일 로딩 중: {fileName}");
     public static string FileNotFound => Get("File does not exist.", "파일이 존재하지 않습니다.");
     public static string FileReadFailed(string msg) => Get($"Cannot read file: {msg}", $"파일을 읽을 수 없습니다: {msg}");
+    public static string BinaryWarningTitle => Get("This file appears to be binary", "이 파일은 바이너리로 보입니다");
+    public static string BinaryWarningDesc => Get("Binary files may not display correctly and could cause slowdowns.", "바이너리 파일은 올바르게 표시되지 않을 수 있으며 성능 저하를 유발할 수 있습니다.");
+    public static string BtnViewAsText => Get("View as Text", "텍스트로 보기");
 
     // ── Text Tools ──
     public static string BtnRemoveLines => Get("Remove Lines", "라인 제거");

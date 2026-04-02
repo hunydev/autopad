@@ -672,6 +672,40 @@
                                TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
+
+            <Border x:Name="BinaryWarningOverlay"
+                    Background="#2D2D30"
+                    BorderBrush="#3F3F46"
+                    BorderThickness="1"
+                    Visibility="Collapsed">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="340">
+                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe Fluent Icons" FontSize="40"
+                               Foreground="#888888" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                    <TextBlock x:Name="BinaryWarningTitle"
+                               Text="This file appears to be binary"
+                               Foreground="#E0E0E0"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               TextAlignment="Center"
+                               Margin="0,0,0,6"/>
+                    <TextBlock x:Name="BinaryWarningDesc"
+                               Text="Binary files may not display correctly and could cause slowdowns."
+                               Foreground="#888888"
+                               FontSize="12"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,16"/>
+                    <Button x:Name="ViewAsTextButton"
+                            Click="ViewAsTextButton_Click"
+                            Style="{StaticResource SecondaryButton}"
+                            HorizontalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8A1;" FontFamily="Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBlock x:Name="ViewAsTextButtonText" Text="View as Text" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
         </Grid>
         
         <!-- 이미지 편집 영역 -->
