@@ -406,8 +406,11 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- 매크로 탭 -->
-            <Grid x:Name="PanelMacro" Visibility="Collapsed">
+        </Grid>
+        </ScrollViewer>
+
+        <!-- 매크로 탭 (ScrollViewer 외부 — 목록 자체 스크롤) -->
+        <Grid x:Name="PanelMacro" Grid.Row="2" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -596,8 +599,6 @@
                     </Button>
                 </StackPanel>
             </Grid>
-        </Grid>
-        </ScrollViewer>
 
         <!-- 저장 버튼 -->
         <Button x:Name="SettingsSaveButton" Grid.Row="3"
