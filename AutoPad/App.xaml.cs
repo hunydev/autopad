@@ -1,9 +1,11 @@
 ﻿using System.Drawing;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using AutoPad.Services;
 using AutoPad.Windows;
 using Application = System.Windows.Application;
@@ -22,6 +24,7 @@ public partial class App : Application
     }
     
     private static Mutex? _mutex;
+    private static bool _isMutexOwner;
     private const string MutexName = "AutoPad_SingleInstance_Mutex";
     
     private NotifyIcon? _notifyIcon;
@@ -42,14 +45,22 @@ public partial class App : Application
 
     private void Application_Startup(object sender, StartupEventArgs e)
     {
+        // 미처리 예외 핸들러 등록
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
         // 중복 실행 방지
         _mutex = new Mutex(true, MutexName, out bool createdNew);
         if (!createdNew)
         {
+            _mutex.Dispose();
+            _mutex = null;
             System.Windows.MessageBox.Show(Loc.AppAlreadyRunning, "AutoPad", MessageBoxButton.OK, MessageBoxImage.Information);
             Shutdown();
             return;
         }
+        _isMutexOwner = true;
 
         _settingsService.Load();
         SettingsService = _settingsService;
@@ -248,8 +259,48 @@ public partial class App : Application
         _historyService.Save();
         _clipboardMonitor?.Dispose();
         _notifyIcon?.Dispose();
-        _mutex?.ReleaseMutex();
+        if (_isMutexOwner)
+        {
+            _mutex?.ReleaseMutex();
+        }
         _mutex?.Dispose();
+    }
+
+    // ── 미처리 예외 핸들러 ──
+
+    private static string CrashLogPath =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AutoPad", "crash.log");
+
+    private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        WriteCrashLog(e.Exception);
+    }
+
+    private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception ex)
+            WriteCrashLog(ex);
+    }
+
+    private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {
+        WriteCrashLog(e.Exception);
+        e.SetObserved();
+    }
+
+    private static void WriteCrashLog(Exception ex)
+    {
+        try
+        {
+            var dir = Path.GetDirectoryName(CrashLogPath)!;
+            Directory.CreateDirectory(dir);
+            var entry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}\n---\n";
+            File.AppendAllText(CrashLogPath, entry);
+        }
+        catch
+        {
+            // 로그 기록 실패는 무시
+        }
     }
 }
 
