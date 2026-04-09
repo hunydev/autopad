@@ -20,6 +20,7 @@ public partial class MacroEditorWindow : Window
 
         NameTextBox.Text = macro.Name;
         ScriptTextBox.Text = macro.Script;
+        InfoModeCheckBox.IsChecked = macro.IsInfoMode;
 
         ApplyLocalization();
 
@@ -36,6 +37,8 @@ public partial class MacroEditorWindow : Window
         TestRunButton.ToolTip = Loc.MacroEditorRunTest;
         CancelButton.Content = Loc.MacroEditorCancel;
         SaveMacroButton.Content = Loc.MacroEditorSave;
+        InfoModeLabel.Text = Loc.MacroInfoMode;
+        InfoModeCheckBox.ToolTip = Loc.MacroInfoModeTooltip;
     }
 
     private void TestRunButton_Click(object sender, RoutedEventArgs e)
@@ -84,6 +87,7 @@ public partial class MacroEditorWindow : Window
 
         _macro.Name = name;
         _macro.Script = script;
+        _macro.IsInfoMode = InfoModeCheckBox.IsChecked == true;
         IsSaved = true;
         Close();
     }

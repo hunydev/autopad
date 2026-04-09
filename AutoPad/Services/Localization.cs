@@ -78,6 +78,7 @@ public static class Loc
     public static string StickyTitleImage(int w, int h) => Get($"Sticky — {w}×{h}", $"스티커 — {w}×{h}");
     public static string StickyEdit => Get("Edit", "편집");
     public static string StickyTopMost => Get("Always on top", "항상 위");
+    public static string StickyColor => Get("Title bar color", "타이틀 바 색상");
     public static string StatusBase64Copied => Get("Base64 copied to clipboard", "Base64가 클립보드에 복사되었습니다");
     public static string StatusBase64SelectionCopied => Get("Selection Base64 copied to clipboard", "선택 영역 Base64가 클립보드에 복사되었습니다");
     public static string StatusFilled => Get("Filled selection", "선택 영역을 채웠습니다");
@@ -199,6 +200,8 @@ public static class Loc
     public static string MacroEditorRunTest => Get("Run Test", "테스트 실행");
     public static string MacroEditorCancel => Get("Cancel", "취소");
     public static string MacroEditorSave => Get("Save", "저장");
+    public static string MacroInfoMode => Get("Info Mode", "정보 모드");
+    public static string MacroInfoModeTooltip => Get("Show result as info dialog instead of replacing text", "텍스트를 치환하지 않고 결과를 정보 대화상자로 표시");
     public static string MacroEditorNameRequired => Get("Name is required.", "이름을 입력해주세요.");
     public static string MacroEditorScriptError(string msg) => Get($"Script error: {msg}", $"스크립트 오류: {msg}");
     public static string MacroMustReturnString => Get("Macro must return a string.", "매크로는 문자열을 반환해야 합니다.");

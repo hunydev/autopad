@@ -1770,9 +1770,10 @@ public partial class EditWindow : Window
 
         foreach (var macro in macros)
         {
+            var displayName = macro.IsInfoMode ? $"\u2139\uFE0F {macro.Name}" : macro.Name;
             var btn = new WpfButton
             {
-                Content = macro.Name,
+                Content = displayName,
                 Tag = macro.Id,
                 Background = System.Windows.Media.Brushes.Transparent,
                 Foreground = new System.Windows.Media.SolidColorBrush(
@@ -1804,6 +1805,12 @@ public partial class EditWindow : Window
         {
             var result = MacroService.RunMacro(macro.Script, text);
 
+            if (macro.IsInfoMode)
+            {
+                ShowMacroInfoResult(macro.Name, result);
+                return;
+            }
+
             if (ContentTextBox.SelectionLength > 0)
                 ReplaceSelection(result);
             else
@@ -1818,6 +1825,86 @@ public partial class EditWindow : Window
                 Loc.MacroRunError(macro.Name, ex.Message),
                 "AutoPad", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    private void ShowMacroInfoResult(string macroName, string result)
+    {
+        var infoWindow = new Window
+        {
+            Title = $"AutoPad - {macroName}",
+            Width = 480,
+            Height = 320,
+            MinWidth = 360,
+            MinHeight = 200,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = this,
+            Background = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0x1E, 0x1E, 0x1E)),
+            ShowInTaskbar = false,
+            ResizeMode = ResizeMode.CanResizeWithGrip,
+            Icon = IconHelper.CreateAppIconImageSource(32)
+        };
+        infoWindow.SourceInitialized += (s, _) => ThemeHelper.ApplyDarkTitleBar(infoWindow, true);
+
+        var grid = new Grid { Margin = new Thickness(16) };
+        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        var textBox = new System.Windows.Controls.TextBox
+        {
+            Text = result,
+            IsReadOnly = true,
+            AcceptsReturn = true,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            Background = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0x2D, 0x2D, 0x30)),
+            Foreground = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0x4E, 0xC9, 0xB0)),
+            BorderBrush = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0x3F, 0x3F, 0x46)),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(12),
+            FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+            FontSize = 14,
+            CaretBrush = System.Windows.Media.Brushes.White
+        };
+        var darkScrollBarStyle = (Style)System.Windows.Application.Current.FindResource("DarkScrollBar");
+        textBox.Resources.Add(typeof(System.Windows.Controls.Primitives.ScrollBar), darkScrollBarStyle);
+        Grid.SetRow(textBox, 0);
+        grid.Children.Add(textBox);
+
+        var btnPanel = new StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+            Margin = new Thickness(0, 12, 0, 0)
+        };
+        Grid.SetRow(btnPanel, 1);
+
+        var copyBtn = new WpfButton
+        {
+            Content = Loc.BtnCopyClose,
+            Background = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(0x00, 0x78, 0xD4)),
+            Foreground = System.Windows.Media.Brushes.White,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(20, 10, 20, 10),
+            Cursor = System.Windows.Input.Cursors.Hand,
+            FontSize = 13
+        };
+        copyBtn.Click += (_, _) =>
+        {
+            SuppressClipboardMonitor = true;
+            WpfClipboard.SetText(result);
+            SuppressClipboardMonitor = false;
+            infoWindow.Close();
+        };
+        btnPanel.Children.Add(copyBtn);
+        grid.Children.Add(btnPanel);
+
+        infoWindow.Content = grid;
+        infoWindow.ShowDialog();
     }
 
     // ── URL 호버 버튼 ──

@@ -23,7 +23,7 @@
             </Grid.RowDefinitions>
 
             <!-- 타이틀 바 -->
-            <Border Grid.Row="0" Background="#252526" CornerRadius="6,6,0,0"
+            <Border x:Name="TitleBar" Grid.Row="0" Background="#252526" CornerRadius="6,6,0,0"
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -41,6 +41,32 @@
                                TextTrimming="CharacterEllipsis"/>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
+                        <!-- 타이틀 바 색상 변경 -->
+                        <Button x:Name="ColorButton"
+                                ToolTip="Color"
+                                Click="ColorButton_Click"
+                                Width="28" Height="24">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="3">
+                                        <Border x:Name="ColorSwatch"
+                                                Width="14" Height="14"
+                                                CornerRadius="2"
+                                                Background="#252526"
+                                                BorderBrush="#555555"
+                                                BorderThickness="1"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#3E3E42"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
                         <!-- 이미지용: 창 맞추기 토글 -->
                         <Button x:Name="FitToggleButton"
                                 ToolTip="Fit"
@@ -142,6 +168,26 @@
                     </StackPanel>
                 </Grid>
             </Border>
+
+            <!-- 색상 선택 팝업 -->
+            <Popup x:Name="ColorPopup"
+                   PlacementTarget="{Binding ElementName=ColorButton}"
+                   Placement="Bottom"
+                   StaysOpen="False"
+                   AllowsTransparency="True">
+                <Border Background="#333337"
+                        CornerRadius="4"
+                        Padding="6"
+                        BorderBrush="#555555"
+                        BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="8" Opacity="0.4" ShadowDepth="2"/>
+                    </Border.Effect>
+                    <WrapPanel x:Name="ColorPalettePanel" Width="148">
+                        <!-- 색상은 코드비하인드에서 동적 생성 -->
+                    </WrapPanel>
+                </Border>
+            </Popup>
 
             <!-- 콘텐츠 영역 -->
             <Grid Grid.Row="1">

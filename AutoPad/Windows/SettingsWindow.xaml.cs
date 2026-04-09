@@ -458,7 +458,8 @@ public partial class SettingsWindow : Window
         MacroListBox.Items.Clear();
         foreach (var macro in _settingsService.Settings.Macros)
         {
-            MacroListBox.Items.Add(macro.Name);
+            var display = macro.IsInfoMode ? $"\u2139\uFE0F {macro.Name}" : macro.Name;
+            MacroListBox.Items.Add(display);
         }
     }
 
@@ -509,7 +510,8 @@ public partial class SettingsWindow : Window
         {
             Id = macro.Id,
             Name = macro.Name,
-            Script = macro.Script
+            Script = macro.Script,
+            IsInfoMode = macro.IsInfoMode
         };
 
         var editor = new MacroEditorWindow(editCopy, _settingsService.Settings.IsDarkMode)
@@ -522,6 +524,7 @@ public partial class SettingsWindow : Window
         {
             macro.Name = editCopy.Name;
             macro.Script = editCopy.Script;
+            macro.IsInfoMode = editCopy.IsInfoMode;
             _settingsService.Save();
             RefreshMacroList();
         }

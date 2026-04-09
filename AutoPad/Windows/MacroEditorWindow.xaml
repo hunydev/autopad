@@ -85,9 +85,56 @@
         </StackPanel>
 
         <!-- 스크립트 라벨 -->
-        <TextBlock Grid.Row="1" x:Name="ScriptLabel"
-                   Text="Script (JavaScript)"
-                   Foreground="#E0E0E0" FontSize="13" Margin="0,0,0,6"/>
+        <Grid Grid.Row="1" Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" x:Name="ScriptLabel"
+                       Text="Script (JavaScript)"
+                       Foreground="#E0E0E0" FontSize="13" VerticalAlignment="Center"/>
+            <CheckBox Grid.Column="2" x:Name="InfoModeCheckBox"
+                      Foreground="#AAAAAA" FontSize="12"
+                      VerticalAlignment="Center"
+                      VerticalContentAlignment="Center">
+                <CheckBox.Template>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal">
+                            <Border x:Name="CheckBorder"
+                                    Width="16" Height="16"
+                                    Background="#2D2D30"
+                                    BorderBrush="#555555"
+                                    BorderThickness="1"
+                                    CornerRadius="3"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,6,0">
+                                <TextBlock x:Name="CheckMark"
+                                           Text="&#xE73E;"
+                                           FontFamily="Segoe Fluent Icons"
+                                           FontSize="11"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Visibility="Collapsed"/>
+                            </Border>
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckBorder" Property="Background" Value="#0078D4"/>
+                                <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </CheckBox.Template>
+                <TextBlock x:Name="InfoModeLabel" Text="Info Mode" Foreground="#AAAAAA" FontSize="12"/>
+            </CheckBox>
+        </Grid>
 
         <!-- 스크립트 편집기 -->
         <TextBox Grid.Row="2" x:Name="ScriptTextBox"

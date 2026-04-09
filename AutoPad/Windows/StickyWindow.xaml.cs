@@ -1,9 +1,11 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using AutoPad.Services;
 using WpfColor = System.Windows.Media.Color;
+using WpfButton = System.Windows.Controls.Button;
 
 namespace AutoPad.Windows;
 
@@ -17,6 +19,13 @@ public partial class StickyWindow : Window
 
     private System.Windows.Controls.TextBlock? _pinIconText;
     private System.Windows.Controls.TextBlock? _fitIconText;
+    private Border? _colorSwatch;
+
+    private static readonly string[] TitleBarColors =
+    [
+        "#252526", "#2B4C7E", "#1E6F50", "#8B3A3A", "#6B3FA0",
+        "#8B6914", "#2E86AB", "#C0392B", "#1ABC9C", "#7D5A50"
+    ];
 
     /// <summary>
     /// 텍스트 스티커
@@ -40,8 +49,13 @@ public partial class StickyWindow : Window
 
         EditButton.ToolTip = Loc.StickyEdit;
         TopMostButton.ToolTip = Loc.StickyTopMost;
+        ColorButton.ToolTip = Loc.StickyColor;
 
-        Loaded += (s, e) => UpdateTopMostVisual();
+        Loaded += (s, e) =>
+        {
+            UpdateTopMostVisual();
+            BuildColorPalette();
+        };
     }
 
     /// <summary>
@@ -68,11 +82,13 @@ public partial class StickyWindow : Window
 
         EditButton.ToolTip = Loc.StickyEdit;
         TopMostButton.ToolTip = Loc.StickyTopMost;
+        ColorButton.ToolTip = Loc.StickyColor;
 
         Loaded += (s, e) =>
         {
             UpdateTopMostVisual();
             UpdateFitVisual();
+            BuildColorPalette();
         };
     }
 
@@ -183,6 +199,74 @@ public partial class StickyWindow : Window
             editWindow.Show();
         }
         Close();
+    }
+
+    private void ColorButton_Click(object sender, RoutedEventArgs e)
+    {
+        ColorPopup.IsOpen = !ColorPopup.IsOpen;
+    }
+
+    private void BuildColorPalette()
+    {
+        ColorPalettePanel.Children.Clear();
+        foreach (var hex in TitleBarColors)
+        {
+            var color = (WpfColor)System.Windows.Media.ColorConverter.ConvertFromString(hex);
+            var btn = new WpfButton
+            {
+                Width = 24,
+                Height = 24,
+                Margin = new Thickness(2),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Tag = hex,
+                Background = new SolidColorBrush(color)
+            };
+            btn.Template = CreateColorSwatchTemplate();
+            btn.Click += ColorPaletteItem_Click;
+            ColorPalettePanel.Children.Add(btn);
+        }
+    }
+
+    private static ControlTemplate CreateColorSwatchTemplate()
+    {
+        var template = new ControlTemplate(typeof(WpfButton));
+        var border = new FrameworkElementFactory(typeof(Border));
+        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(3));
+        border.SetBinding(Border.BackgroundProperty,
+            new System.Windows.Data.Binding("Background") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent) });
+        border.SetValue(Border.BorderBrushProperty, System.Windows.Media.Brushes.Transparent);
+        border.SetValue(Border.BorderThicknessProperty, new Thickness(2));
+        border.Name = "Bd";
+        template.VisualTree = border;
+
+        var trigger = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
+        trigger.Setters.Add(new Setter(Border.BorderBrushProperty, System.Windows.Media.Brushes.White, "Bd"));
+        template.Triggers.Add(trigger);
+
+        return template;
+    }
+
+    private void ColorPaletteItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not WpfButton btn || btn.Tag is not string hex) return;
+        ColorPopup.IsOpen = false;
+
+        var color = (WpfColor)System.Windows.Media.ColorConverter.ConvertFromString(hex);
+        TitleBar.Background = new SolidColorBrush(color);
+        UpdateColorSwatch(color);
+    }
+
+    private void UpdateColorSwatch(WpfColor color)
+    {
+        if (_colorSwatch == null)
+        {
+            ColorButton.ApplyTemplate();
+            _colorSwatch = (Border?)ColorButton.Template.FindName("ColorSwatch", ColorButton);
+        }
+        if (_colorSwatch != null)
+        {
+            _colorSwatch.Background = new SolidColorBrush(color);
+        }
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)

@@ -27,16 +27,9 @@ AutoPad is lightweight, privacy-respecting (no data leaves your machine), and st
 
 ## 이 버전의 새로운 기능 (What's new in this version)
 
-• JavaScript macro system with sandboxed Jint engine
-• 28 built-in macro presets (masking, JSON, Base64, sorting, extraction, and more)
-• Macro editor with test execution and script validation
-• Macro management: add, edit, delete, reorder, and presets
-• Sticky notes (Pin) — pin text or images as always-on-top memo windows
-• Sticky: always-on-top toggle, edit mode, image fit toggle, resizable
-• Image Base64 copy (full image or selected region as data URI)
-• Special whitespace removal split into dropdown (delete vs replace with space)
-• Spell check option for text editor (Settings > General)
-• Settings macro tab (4-tab layout: General / Notification / History / Macro)
+• Macro info mode — show results as an info dialog instead of replacing text
+• Macro editor Info Mode checkbox
+• Sticky note title bar color customization (10-color palette)
 
 
 ## 제품 기능 (Product features) — 최대 20개, 각 200자 이하

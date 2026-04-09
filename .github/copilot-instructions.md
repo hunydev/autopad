@@ -5,7 +5,7 @@
 AutoPad은 Windows 클립보드 모니터링 유틸리티다. 텍스트/이미지/파일 복사를 실시간 감지하여 토스트 알림을 표시하고, 즉석 편집 기능을 제공한다. Microsoft Store에 $0.99로 판매 중이며, 소스 코드는 MIT 라이선스.
 
 - **개발자**: hunydev
-- **현재 버전**: 1.1.0.0
+- **현재 버전**: 1.1.1.0
 - **GitHub**: https://github.com/hunydev/autopad
 - **Store**: https://apps.microsoft.com/detail/autopad
 - **Landing page**: https://hunydev.github.io/autopad/ (`docs/` 폴더가 GitHub Pages로 배포됨)
@@ -203,7 +203,7 @@ autopad/                          ← 리포지토리 루트 (workspace root)
 - 히스토리 항목 컨텍스트 메뉴 (복사/편집)
 - DarkCheckBox disabled 스타일 (opacity 0.4)
 
-### v1.1.0.0 (현재)
+### v1.1.0.0
 - Jint 기반 JavaScript 매크로 시스템 (샌드박스 실행)
 - 28개 내장 매크로 프리셋 (마스킹, JSON, Base64, 정렬, 추출 등)
 - 매크로 편집기 (테스트 실행, 스크립트 검증)
@@ -216,6 +216,11 @@ autopad/                          ← 리포지토리 루트 (workspace root)
 - 설정 매크로 탭 추가 (4탭 구성: 일반/알림/히스토리/매크로)
 - 바이너리 파일 감지 — 편집 시도 시 null byte 검사 후 경고 표시, "텍스트로 보기" 버튼으로 강제 로드
 - 설정 매크로 탭 스크롤 수정 — 매크로 목록만 스크롤되도록 개선
+
+### v1.1.1.0 (현재)
+- 매크로 정보 모드 — 텍스트를 치환하지 않고 결과를 정보 대화상자로 표시
+- 매크로 편집기에 Info Mode 체크박스 추가
+- 스티커 메모 타이틀 바 색상 변경 기능 (10색 팔레트)
 
 ---
 
