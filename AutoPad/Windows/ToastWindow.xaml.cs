@@ -372,18 +372,41 @@ public partial class ToastWindow : Window
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_textContent == null && _imageContent == null)
+        {
+            return;
+        }
+
+        PauseAutoCloseTimerForSaveDialog();
+
+        try
+        {
+            if (_textContent != null)
+            {
+                SaveTextFile(_textContent);
+            }
+            else if (_imageContent != null)
+            {
+                SaveImageFile(_imageContent);
+            }
+        }
+        finally
+        {
+            ResumeAutoCloseTimer();
+        }
+    }
+
+    private void PauseAutoCloseTimerForSaveDialog()
+    {
         _autoCloseTimer.Stop();
+    }
 
-        if (_textContent != null)
+    private void ResumeAutoCloseTimer()
+    {
+        if (!IsMouseOver)
         {
-            SaveTextFile(_textContent);
+            _autoCloseTimer.Start();
         }
-        else if (_imageContent != null)
-        {
-            SaveImageFile(_imageContent);
-        }
-
-        Close();
     }
 
     private void SaveTextFile(string text)
