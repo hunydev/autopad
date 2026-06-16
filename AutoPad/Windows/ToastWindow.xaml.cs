@@ -22,6 +22,7 @@ public partial class ToastWindow : Window
     private readonly string? _htmlContent;
     private readonly ToastPosition _position;
     private double _targetOpacity;
+    private bool _isSaveDialogOpen;
 
     public event EventHandler? EditRequested;
 
@@ -398,11 +399,13 @@ public partial class ToastWindow : Window
 
     private void PauseAutoCloseTimerForSaveDialog()
     {
+        _isSaveDialogOpen = true;
         _autoCloseTimer.Stop();
     }
 
     private void ResumeAutoCloseTimer()
     {
+        _isSaveDialogOpen = false;
         if (!IsMouseOver)
         {
             _autoCloseTimer.Start();
@@ -418,7 +421,7 @@ public partial class ToastWindow : Window
             FileName = $"clipboard_{DateTime.Now:yyyyMMdd_HHmmss}"
         };
 
-        if (dialog.ShowDialog() == true)
+        if (dialog.ShowDialog(this) == true)
         {
             try
             {
@@ -440,7 +443,7 @@ public partial class ToastWindow : Window
             FileName = $"clipboard_{DateTime.Now:yyyyMMdd_HHmmss}"
         };
 
-        if (dialog.ShowDialog() == true)
+        if (dialog.ShowDialog(this) == true)
         {
             try
             {
@@ -481,6 +484,11 @@ public partial class ToastWindow : Window
     protected override void OnMouseLeave(System.Windows.Input.MouseEventArgs e)
     {
         base.OnMouseLeave(e);
+        if (_isSaveDialogOpen)
+        {
+            return;
+        }
+
         _autoCloseTimer.Start();
         if (_targetOpacity < 1.0)
         {
