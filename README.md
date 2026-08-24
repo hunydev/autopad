@@ -5,9 +5,9 @@ A lightweight Windows clipboard monitoring utility that detects copied content i
 ## Features
 
 - **Clipboard Monitoring** — Automatically detects text, images, and file copies
-- **Toast Notifications** — Non-intrusive popup with preview, character count, and byte size
+- **Toast Notifications** — Non-intrusive popup with preview, character count, byte size, and post-save file/folder actions
 - **Instant Editing** — Edit copied text or annotate images directly from the toast popup
-- **Image Markup** — Pen, eraser (stroke/point), region selection with mosaic, fill, and erase tools
+- **Image Markup** — Pen, eraser, and scale-aware region tools with width-fit viewing and vertical scrolling
 - **HTML Source Viewer** — View raw HTML source when web content is copied with formatting
 - **Path Detection** — Detects file/folder paths in clipboard text with quick-open buttons
 - **File Monitoring** — Detects file copy operations with thumbnail preview for images
@@ -25,7 +25,15 @@ A lightweight Windows clipboard monitoring utility that detects copied content i
 - **Sticky Notes** — Pin copied text or images as always-on-top sticky windows with resize and edit toggle
 - **Image Base64 Copy** — Copy full image or selected region as a Base64 data URI
 - **Spell Check** — Optional spell checking in the text editor
-- **Auto-start** — Optional Windows startup registration
+- **Auto-start** — Windows startup registration with real-state synchronization and automatic repair of stale registrations
+
+## What's New in 1.1.4.0
+
+- Fixed Windows auto-start registration and synchronized the checkbox with the actual Windows state
+- After saving from a toast, open the saved file or reveal it immediately in File Explorer
+- Changed image **Fit** mode to follow the editor width and provide vertical scrolling for tall images
+- Corrected selection bounds and coordinate scaling between original and fitted image views
+- Prevented an image resize feedback loop that could repeatedly change the image size during interactive window resizing
 
 ## Screenshots
 
@@ -72,8 +80,9 @@ Or use the included build script:
 1. Launch AutoPad — it appears as a tray icon in the system tray
 2. Copy any text, image, or file anywhere on your system
 3. A toast notification appears with a preview
-4. Click **Edit** to open the editing window, or **HTML Source** to view raw HTML (when available)
-5. Edit content and click **Copy & Close** to save back to clipboard
+4. Save directly from the toast, then open the saved file or reveal it in File Explorer
+5. Click **Edit** to open the editing window, or **HTML Source** to view raw HTML (when available)
+6. Edit content and click **Copy & Close** to save back to clipboard
 
 ### Keyboard Shortcuts
 
@@ -119,6 +128,7 @@ Double-click the tray icon or right-click → Settings:
 - **CF_HTML parsing** — Raw clipboard HTML format extraction with UTF-8 byte offset handling
 - **Jint** — Sandboxed JavaScript engine for macro execution
 - **Mutex** — Single instance enforcement
+- **StartupTask / HKCU Run** — Packaged and unpackaged Windows startup registration with state verification
 
 ## Project Structure
 
@@ -131,6 +141,7 @@ AutoPad/
 │   ├── Localization.cs      # Multi-language string resources (en/ko)
 │   ├── MacroService.cs      # Jint JS macro execution & presets
 │   ├── SettingsService.cs   # JSON settings persistence
+│   ├── StartupService.cs    # MSIX/registry startup registration and state synchronization
 │   ├── ThemeHelper.cs       # Dark mode DWM API
 │   └── IconHelper.cs        # Dynamic app icon generation
 ├── Models/

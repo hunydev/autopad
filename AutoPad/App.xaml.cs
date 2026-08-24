@@ -72,6 +72,10 @@ public partial class App : Application
         // 언어 설정 적용
         Loc.Language = _settingsService.Settings.Language;
 
+        // 설정은 켜져 있지만 등록 경로나 Windows 상태가 유실된 경우 자동 복구합니다.
+        // 사용자가 Windows 설정에서 명시적으로 끈 경우에는 다시 켜지 않습니다.
+        _ = RepairStartupRegistrationAsync();
+
         // 숨겨진 메인 창 생성 (클립보드 모니터링용)
         _hiddenWindow = new MainWindow();
         _hiddenWindow.WindowState = WindowState.Minimized;
@@ -94,6 +98,20 @@ public partial class App : Application
         else if (!_settingsService.Settings.StartMinimized)
         {
             OpenSettingsWindow();
+        }
+    }
+
+    private async Task RepairStartupRegistrationAsync()
+    {
+        if (!_settingsService.Settings.StartWithWindows)
+        {
+            return;
+        }
+
+        var status = await StartupService.GetStatusAsync();
+        if (status.State == StartupRegistrationState.Disabled)
+        {
+            await StartupService.SetEnabledAsync(enable: true);
         }
     }
 

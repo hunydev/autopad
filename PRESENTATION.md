@@ -105,7 +105,7 @@ curl -sSL https://example.com/install.sh | bash -s -- \
 ├─────────────────────────────────────────────────────────────┤
 │  시스템 통합                                                │
 │  ├─ NotifyIcon (시스템 트레이)                              │
-│  ├─ Registry (시작 프로그램 등록)                           │
+│  ├─ StartupTask / Registry (시작 프로그램 등록·상태 확인)   │
 │  └─ Mutex (단일 인스턴스 보장)                              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -130,16 +130,18 @@ curl -sSL https://example.com/install.sh | bash -s -- \
 ### 2. 이미지 마킹 도구
 - 스크린샷 복사 후 펜/지우개로 즉시 마킹
 - 다양한 색상 팔레트 및 펜 굵기 조절
+- 원본/가로 폭 맞추기 배율에 맞는 영역 선택과 세로 스크롤
 - 문서 작성 시 캡처 → 마킹 → 붙여넣기 원스톱
 
 ### 3. 파일 저장 & 인코딩
 - 텍스트: TXT 파일로 저장
 - 이미지: PNG/JPEG/BMP 형식 지원
+- 저장 완료 후 파일 열기/저장 위치 열기
 - UTF-8 / EUC-KR 인코딩 변환 지원
 
 ### 4. 시스템 통합
 - 시스템 트레이 상주 (백그라운드 동작)
-- Windows 시작 시 자동 실행 옵션
+- Windows 시작 시 자동 실행 옵션과 실제 등록 상태 동기화
 - 단일 인스턴스 실행 보장
 - 다크 테마 UI (타이틀바 포함)
 
@@ -153,6 +155,7 @@ AutoPad/
 ├── Services/
 │   ├── ClipboardMonitor.cs  # Win32 클립보드 변경 감지
 │   ├── SettingsService.cs   # JSON 설정 저장/로드
+│   ├── StartupService.cs    # MSIX/Registry 자동실행 등록·상태 확인
 │   ├── IconHelper.cs        # 앱 아이콘 동적 생성
 │   └── ThemeHelper.cs       # 다크 모드 DWM 적용
 ├── Models/

@@ -716,7 +716,7 @@
                 BorderThickness="1"
                 Visibility="Collapsed">
             <ScrollViewer x:Name="ImageScrollViewer"
-                          HorizontalScrollBarVisibility="Auto" 
+                          HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Auto"
                           Style="{StaticResource DarkScrollViewer}">
                 <Canvas x:Name="CanvasContainer" 

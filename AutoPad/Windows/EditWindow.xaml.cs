@@ -277,9 +277,14 @@ public partial class EditWindow : Window
     private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (!_isSelectMode) return;
-        
+
+        var bounds = GetCanvasBounds();
+        var pointer = e.GetPosition(CanvasContainer);
         _isSelecting = true;
-        _selectionStart = e.GetPosition(CanvasContainer);
+        _selectionStart = new WpfPoint(
+            Math.Clamp(pointer.X, 0, bounds.Width),
+            Math.Clamp(pointer.Y, 0, bounds.Height));
+        _selectionRect = new WpfRect(_selectionStart.X, _selectionStart.Y, 0, 0);
         _hasSelection = false;
         
         Canvas.SetLeft(SelectionRectangle, _selectionStart.X);
@@ -296,21 +301,18 @@ public partial class EditWindow : Window
     {
         if (!_isSelecting) return;
         
-        var currentPos = e.GetPosition(CanvasContainer);
-        
+        var bounds = GetCanvasBounds();
+        var pointer = e.GetPosition(CanvasContainer);
+        var currentPos = new WpfPoint(
+            Math.Clamp(pointer.X, 0, bounds.Width),
+            Math.Clamp(pointer.Y, 0, bounds.Height));
+
+        // 원본 모드에서는 원본 캔버스, 맞추기 모드에서는 배율이 적용된
+        // 현재 캔버스를 경계로 사용해야 선택 가능 범위가 정확히 일치합니다.
         var x = Math.Min(_selectionStart.X, currentPos.X);
         var y = Math.Min(_selectionStart.Y, currentPos.Y);
         var w = Math.Abs(currentPos.X - _selectionStart.X);
         var h = Math.Abs(currentPos.Y - _selectionStart.Y);
-        
-        // Clamp to canvas bounds
-        if (_originalImage != null)
-        {
-            x = Math.Max(0, x);
-            y = Math.Max(0, y);
-            w = Math.Min(w, _originalImage.PixelWidth - x);
-            h = Math.Min(h, _originalImage.PixelHeight - y);
-        }
         
         Canvas.SetLeft(SelectionRectangle, x);
         Canvas.SetTop(SelectionRectangle, y);
@@ -318,6 +320,18 @@ public partial class EditWindow : Window
         SelectionRectangle.Height = Math.Max(0, h);
         
         _selectionRect = new WpfRect(x, y, Math.Max(0, w), Math.Max(0, h));
+    }
+
+    private WpfRect GetCanvasBounds()
+    {
+        var width = CanvasContainer.ActualWidth > 0
+            ? CanvasContainer.ActualWidth
+            : CanvasContainer.Width;
+        var height = CanvasContainer.ActualHeight > 0
+            ? CanvasContainer.ActualHeight
+            : CanvasContainer.Height;
+
+        return new WpfRect(0, 0, Math.Max(0, width), Math.Max(0, height));
     }
 
     private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -735,7 +749,7 @@ public partial class EditWindow : Window
     {
         if (_isFitToWindow && _originalImage != null)
         {
-            ApplyFitToWindow();
+            ScheduleFitToWindow();
         }
     }
 
@@ -747,12 +761,10 @@ public partial class EditWindow : Window
         
         if (_isFitToWindow)
         {
-            // 먼저 스트로크를 원본 좌표로 보존
-            ApplyFitToWindow();
-            
             ImageScrollViewer.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
-            ImageScrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
-            
+            ApplyFitToWindow();
+            ScheduleFitToWindow();
+
             FitToggleText.Text = Loc.FitOriginal;
             FitToggleIcon.Text = "\uE71E";
         }
@@ -770,21 +782,57 @@ public partial class EditWindow : Window
     }
 
     private double _currentScale = 1.0;
+    private DispatcherOperation? _pendingFitOperation;
+
+    private void ScheduleFitToWindow()
+    {
+        if (_pendingFitOperation?.Status == DispatcherOperationStatus.Pending)
+        {
+            return;
+        }
+
+        _pendingFitOperation = Dispatcher.BeginInvoke(() =>
+        {
+            _pendingFitOperation = null;
+            if (IsLoaded && _isFitToWindow && _originalImage != null)
+            {
+                ApplyFitToWindow();
+            }
+        }, DispatcherPriority.Render);
+    }
 
     private void ApplyFitToWindow()
     {
         if (_originalImage == null) return;
-        
-        var scrollViewerHeight = ImageScrollViewer.ActualHeight;
-        if (scrollViewerHeight <= 0)
-            scrollViewerHeight = ImageContainer.ActualHeight - 2;
-        if (scrollViewerHeight <= 0) return;
-        
+
+        // ViewportWidth는 세로 스크롤바 표시 여부에 따라 바뀌므로 배율 계산에
+        // 사용하면 표시/숨김이 서로를 촉발하는 레이아웃 피드백 루프가 생깁니다.
+        // 스크롤바를 제외하지 않은 고정된 컨트롤 크기로 필요 여부를 먼저 정한 뒤,
+        // 한 번의 계산으로 스크롤바 상태와 실제 이미지 폭을 함께 확정합니다.
+        var availableWidth = ImageScrollViewer.ActualWidth;
+        var availableHeight = ImageScrollViewer.ActualHeight;
+        if (availableWidth <= 0)
+            availableWidth = ImageContainer.ActualWidth - 2;
+        if (availableHeight <= 0)
+            availableHeight = ImageContainer.ActualHeight - 2;
+        if (availableWidth <= 0 || availableHeight <= 0) return;
+
         var imgWidth = (double)_originalImage.PixelWidth;
         var imgHeight = (double)_originalImage.PixelHeight;
-        
-        var newScale = scrollViewerHeight / imgHeight;
-        // 이미지가 원본보다 큰 경우에도 맞추기
+
+        var fullWidthScale = availableWidth / imgWidth;
+        var needsVerticalScrollBar = imgHeight * fullWidthScale > availableHeight + 0.5;
+        ImageScrollViewer.VerticalScrollBarVisibility = needsVerticalScrollBar
+            ? ScrollBarVisibility.Visible
+            : ScrollBarVisibility.Hidden;
+
+        var contentWidth = availableWidth;
+        if (needsVerticalScrollBar)
+        {
+            contentWidth = Math.Max(1, contentWidth - GetVerticalScrollBarWidth());
+        }
+
+        var newScale = contentWidth / imgWidth;
         var fitWidth = imgWidth * newScale;
         var fitHeight = imgHeight * newScale;
         
@@ -799,7 +847,8 @@ public partial class EditWindow : Window
                 stroke.Transform(matrix, false);
             }
         }
-        
+
+        ScaleSelection(newScale / _currentScale);
         _currentScale = newScale;
         
         CanvasContainer.Width = fitWidth;
@@ -809,6 +858,26 @@ public partial class EditWindow : Window
         ContentImage.Stretch = Stretch.Uniform;
         DrawingCanvas.Width = fitWidth;
         DrawingCanvas.Height = fitHeight;
+    }
+
+    private double GetVerticalScrollBarWidth()
+    {
+        ImageScrollViewer.ApplyTemplate();
+        if (ImageScrollViewer.Template.FindName("PART_VerticalScrollBar", ImageScrollViewer)
+            is FrameworkElement scrollBar)
+        {
+            if (!double.IsNaN(scrollBar.Width) && scrollBar.Width > 0)
+            {
+                return scrollBar.Width;
+            }
+
+            if (scrollBar.ActualWidth > 0)
+            {
+                return scrollBar.ActualWidth;
+            }
+        }
+
+        return 12;
     }
 
     private void RestoreOriginalSize()
@@ -829,11 +898,31 @@ public partial class EditWindow : Window
                 stroke.Transform(matrix, false);
             }
         }
-        
+
+        ScaleSelection(1.0 / _currentScale);
         _currentScale = 1.0;
         
         ContentImage.Stretch = Stretch.None;
         SetImageOriginalSize(_originalImage);
+    }
+
+    private void ScaleSelection(double ratio)
+    {
+        if (!_hasSelection || Math.Abs(ratio - 1.0) <= 0.001)
+        {
+            return;
+        }
+
+        _selectionRect = new WpfRect(
+            _selectionRect.X * ratio,
+            _selectionRect.Y * ratio,
+            _selectionRect.Width * ratio,
+            _selectionRect.Height * ratio);
+
+        Canvas.SetLeft(SelectionRectangle, _selectionRect.X);
+        Canvas.SetTop(SelectionRectangle, _selectionRect.Y);
+        SelectionRectangle.Width = _selectionRect.Width;
+        SelectionRectangle.Height = _selectionRect.Height;
     }
 
     private void FillSelectionButton_Click(object sender, RoutedEventArgs e)

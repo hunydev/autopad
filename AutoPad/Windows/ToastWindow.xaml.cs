@@ -23,6 +23,7 @@ public partial class ToastWindow : Window
     private readonly ToastPosition _position;
     private double _targetOpacity;
     private bool _isSaveDialogOpen;
+    private string? _savedFilePath;
 
     public event EventHandler? EditRequested;
 
@@ -328,13 +329,14 @@ public partial class ToastWindow : Window
 
     private void FileOpenButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_detectedPath == null) return;
+        var targetPath = _savedFilePath ?? _detectedPath;
+        if (targetPath == null || Directory.Exists(targetPath)) return;
         
         _autoCloseTimer.Stop();
         
         try
         {
-            Process.Start(new ProcessStartInfo(_detectedPath) { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(targetPath) { UseShellExecute = true });
         }
         catch { }
         
@@ -343,13 +345,17 @@ public partial class ToastWindow : Window
 
     private void FolderOpenButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_detectedPath == null) return;
+        var targetPath = _savedFilePath ?? _detectedPath;
+        if (targetPath == null) return;
         
         _autoCloseTimer.Stop();
         
         try
         {
-            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{_detectedPath}\""));
+            var arguments = File.Exists(targetPath)
+                ? $"/select,\"{targetPath}\""
+                : $"\"{targetPath}\"";
+            Process.Start(new ProcessStartInfo("explorer.exe", arguments) { UseShellExecute = true });
         }
         catch { }
         
@@ -382,13 +388,19 @@ public partial class ToastWindow : Window
 
         try
         {
+            string? savedPath = null;
             if (_textContent != null)
             {
-                SaveTextFile(_textContent);
+                savedPath = SaveTextFile(_textContent);
             }
             else if (_imageContent != null)
             {
-                SaveImageFile(_imageContent);
+                savedPath = SaveImageFile(_imageContent);
+            }
+
+            if (savedPath != null)
+            {
+                ShowSavedFileActions(savedPath);
             }
         }
         finally
@@ -412,7 +424,7 @@ public partial class ToastWindow : Window
         }
     }
 
-    private void SaveTextFile(string text)
+    private string? SaveTextFile(string text)
     {
         var dialog = new WpfSaveFileDialog
         {
@@ -426,15 +438,18 @@ public partial class ToastWindow : Window
             try
             {
                 File.WriteAllText(dialog.FileName, text);
+                return dialog.FileName;
             }
             catch (Exception ex)
             {
                 System.Windows.MessageBox.Show(Loc.SaveFailed(ex.Message), Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        return null;
     }
 
-    private void SaveImageFile(BitmapSource image)
+    private string? SaveImageFile(BitmapSource image)
     {
         var dialog = new WpfSaveFileDialog
         {
@@ -455,14 +470,33 @@ public partial class ToastWindow : Window
                 };
 
                 encoder.Frames.Add(BitmapFrame.Create(image));
-                using var stream = File.Create(dialog.FileName);
-                encoder.Save(stream);
+                using (var stream = File.Create(dialog.FileName))
+                {
+                    encoder.Save(stream);
+                }
+                return dialog.FileName;
             }
             catch (Exception ex)
             {
                 System.Windows.MessageBox.Show(Loc.SaveFailed(ex.Message), Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        return null;
+    }
+
+    private void ShowSavedFileActions(string savedFilePath)
+    {
+        _savedFilePath = savedFilePath;
+        SaveButton.Visibility = Visibility.Collapsed;
+
+        FileOpenButton.Content = Loc.BtnFileOpen;
+        FileOpenButton.Visibility = Visibility.Visible;
+        FolderOpenButton.Content = Loc.BtnFolderOpen;
+        FolderOpenButton.Visibility = Visibility.Visible;
+
+        // 컴팩트 모드에서도 버튼이 늘어난 크기에 맞춰 토스트 위치를 다시 잡습니다.
+        Dispatcher.BeginInvoke(PositionWindow, DispatcherPriority.Loaded);
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e)

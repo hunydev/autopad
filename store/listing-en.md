@@ -27,9 +27,10 @@ AutoPad is lightweight, privacy-respecting (no data leaves your machine), and st
 
 ## 이 버전의 새로운 기능 (What's new in this version)
 
-• Macro info mode — show results as an info dialog instead of replacing text
-• Macro editor Info Mode checkbox
-• Sticky note title bar color customization (10-color palette)
+• Improved Windows startup registration and state synchronization
+• Open saved files or their containing folders directly from the toast
+• Stable width-based image fitting, vertical scrolling, and window resizing
+• Corrected image selection bounds for original and fitted views
 
 
 ## 제품 기능 (Product features) — 최대 20개, 각 200자 이하

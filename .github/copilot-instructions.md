@@ -5,7 +5,7 @@
 AutoPad은 Windows 클립보드 모니터링 유틸리티다. 텍스트/이미지/파일 복사를 실시간 감지하여 토스트 알림을 표시하고, 즉석 편집 기능을 제공한다. Microsoft Store에 $0.99로 판매 중이며, 소스 코드는 MIT 라이선스.
 
 - **개발자**: hunydev
-- **현재 버전**: 1.1.3.0
+- **현재 버전**: 1.1.4.0
 - **GitHub**: https://github.com/hunydev/autopad
 - **Store**: https://apps.microsoft.com/detail/autopad
 - **Landing page**: https://hunydev.github.io/autopad/ (`docs/` 폴더가 GitHub Pages로 배포됨)
@@ -64,6 +64,7 @@ autopad/                          ← 리포지토리 루트 (workspace root)
 │   │   ├── Localization.cs           ← 다국어 문자열 (en/ko), Loc 정적 클래스
 │   │   ├── MacroService.cs           ← Jint JS 매크로 실행/프리셋
 │   │   ├── SettingsService.cs        ← JSON 설정 파일 관리
+│   │   ├── StartupService.cs         ← MSIX/Registry 자동실행 등록·상태 확인
 │   │   ├── ThemeHelper.cs            ← DwmSetWindowAttribute 다크 타이틀바
 │   │   └── IconHelper.cs             ← 동적 앱 아이콘 생성
 │   ├── Models/
@@ -105,7 +106,7 @@ autopad/                          ← 리포지토리 루트 (workspace root)
 ## 핵심 아키텍처
 
 ### 앱 생명주기 (App.xaml.cs)
-1. `Application_Startup` → Mutex 단일 인스턴스 → 설정 로드 → 히스토리 로드
+1. `Application_Startup` → Mutex 단일 인스턴스 → 설정/히스토리 로드 → 자동실행 등록 복구
 2. `MainWindow` (숨김) 생성 → Win32 HWND로 클립보드 리스너 등록
 3. `SetupNotifyIcon()` → WinForms 트레이 아이콘 + 컨텍스트 메뉴
 4. `OnClipboardChanged` → 모니터링/설정 일시중단/편집 억제 체크 → `ToastWindow` 표시
@@ -124,12 +125,19 @@ autopad/                          ← 리포지토리 루트 (workspace root)
 - `DoubleAnimation` 으로 fade-in/fade-out
 - `ApplyCompactMode()`: 메타 정보 숨김 + 버튼 축소
 - `UpdatePreviewOpacity()`: 실시간 투명도 업데이트
+- 저장 성공 시 저장 버튼을 파일 열기/폴더 열기 버튼으로 전환
 
 ### 설정 (SettingsWindow.xaml.cs)
-- RadioButton 기반 탭 UI (일반/알림/히스토리)
+- RadioButton 기반 탭 UI (일반/알림/히스토리/매크로)
 - 알림 탭 진입 시 미리보기 토스트 표시, 위치/컴팩트/투명도 실시간 반영
 - 다른 탭 이동/저장/닫기 시 미리보기 토스트 제거
+- 자동실행 체크 상태를 Windows의 실제 StartupTask/Registry 상태와 동기화
 - `DarkComboBox`, `DarkCheckBox`, `TabBtn` 커스텀 ControlTemplate
+
+### 이미지 편집 (EditWindow.xaml.cs)
+- 맞추기 모드는 편집 영역의 가로 폭을 기준으로 배율 계산, 긴 이미지는 세로 스크롤 제공
+- 원본/맞추기 모드별 실제 캔버스 크기로 영역 선택 범위 제한
+- resize 이벤트를 렌더 시점당 한 번으로 병합하고 스크롤바 상태를 단일 계산으로 확정하여 레이아웃 피드백 루프 방지
 
 ### 히스토리 (HistoryWindow.xaml.cs)
 - `ClipboardHistoryService` 에서 JSON 로드/저장
@@ -222,10 +230,17 @@ autopad/                          ← 리포지토리 루트 (workspace root)
 - 매크로 편집기에 Info Mode 체크박스 추가
 - 스티커 메모 타이틀 바 색상 변경 기능 (10색 팔레트)
 
-### v1.1.3.0 (현재)
+### v1.1.3.0
 - 저장 토스트에서 `저장` 버튼 실행 시 저장 다이얼로그가 열려 있는 동안 자동 닫힘 타이머가 재개되지 않도록 보정
 - 저장 다이얼로그가 닫힌 뒤 타이머를 정상적으로 복구하여 저장 완료/취소 동작이 끝나도 토스트가 안정적으로 유지되도록 수정
 - 토스트 저장 처리 경로에서 저장 실패/취소 시에도 닫힘 타이머 상태 일관성 보장
+
+### v1.1.4.0 (현재)
+- Windows 자동실행의 실제 등록 상태 동기화 및 유실된 등록 경로 자동 복구
+- 토스트 저장 성공 후 파일 열기/저장 위치 열기 동작 제공
+- 이미지 맞추기를 가로 폭 기준으로 변경하고 긴 이미지에 세로 스크롤 제공
+- 원본/맞추기 모드별 영역 선택 범위와 좌표 변환 수정
+- 창 resize 중 이미지 배율과 스크롤바가 반복 전환되는 피드백 루프 제거
 
 ---
 

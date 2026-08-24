@@ -1,10 +1,7 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using AutoPad.Models;
 using AutoPad.Services;
-using Microsoft.Win32;
 using WpfComboBox = System.Windows.Controls.ComboBox;
 using WpfComboBoxItem = System.Windows.Controls.ComboBoxItem;namespace AutoPad.Windows;
 
@@ -12,8 +9,7 @@ public partial class SettingsWindow : Window
 {
     private readonly SettingsService _settingsService;
     private ToastWindow? _previewToast;
-    private const string StartupRegistryKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-    private const string AppName = "AutoPad";
+    private StartupRegistrationResult _startupStatus = new(true, StartupRegistrationState.Disabled);
 
     public SettingsWindow(SettingsService settingsService)
     {
@@ -29,6 +25,21 @@ public partial class SettingsWindow : Window
         
         ApplyLocalization();
         LoadSettings();
+        Loaded += SettingsWindow_Loaded;
+    }
+
+    private async void SettingsWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        StartWithWindowsCheckBox.IsEnabled = false;
+        _startupStatus = await StartupService.GetStatusAsync();
+
+        if (_startupStatus.State != StartupRegistrationState.Unavailable)
+        {
+            // JSON에 저장된 과거 값이 아니라 Windows의 실제 등록 상태를 표시합니다.
+            StartWithWindowsCheckBox.IsChecked = _startupStatus.IsEnabled;
+        }
+
+        StartWithWindowsCheckBox.IsEnabled = true;
     }
 
     private void ApplyLocalization()
@@ -237,8 +248,9 @@ public partial class SettingsWindow : Window
         ClosePreviewToast();
     }
 
-    private void SaveButton_Click(object sender, RoutedEventArgs e)
+    private async void SaveButton_Click(object sender, RoutedEventArgs e)
     {
+        SettingsSaveButton.IsEnabled = false;
         var settings = _settingsService.Settings;
 
         // 위치 저장
@@ -292,22 +304,41 @@ public partial class SettingsWindow : Window
             }
         }
         
-        // Windows 시작 프로그램 등록/해제 (변경된 경우에만)
+        // 저장된 설정값과 무관하게 Windows의 실제 등록 상태를 기준으로 반영합니다.
         bool wantStartup = StartWithWindowsCheckBox.IsChecked ?? false;
-        bool currentStartup = settings.StartWithWindows;
-        
-        if (wantStartup != currentStartup)
+        _startupStatus = await StartupService.GetStatusAsync();
+
+        if (_startupStatus.State == StartupRegistrationState.Unavailable
+            || wantStartup != _startupStatus.IsEnabled)
         {
-            bool success = SetStartupWithWindows(wantStartup, showMessage: true);
-            if (success)
+            var result = await StartupService.SetEnabledAsync(wantStartup);
+            if (result.Success)
             {
                 settings.StartWithWindows = wantStartup;
+                _startupStatus = result;
+                System.Windows.MessageBox.Show(
+                    wantStartup ? Loc.MsgStartupRegistered : Loc.MsgStartupUnregistered,
+                    Loc.MsgSuccess,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
-            else if (wantStartup)
+            else
             {
-                // 실패 시 체크박스 원상복구
-                StartWithWindowsCheckBox.IsChecked = settings.StartWithWindows;
+                settings.StartWithWindows = _startupStatus.IsEnabled;
+                StartWithWindowsCheckBox.IsChecked = _startupStatus.IsEnabled;
+
+                var message = result.State switch
+                {
+                    StartupRegistrationState.DisabledByUser => Loc.MsgStartupDisabledByUser,
+                    StartupRegistrationState.DisabledByPolicy => Loc.MsgStartupDisabledByPolicy,
+                    _ => Loc.MsgStartupError(result.ErrorMessage ?? Loc.MsgRegistryFailed)
+                };
+                System.Windows.MessageBox.Show(message, Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+        }
+        else
+        {
+            settings.StartWithWindows = wantStartup;
         }
 
         _settingsService.Save();
@@ -319,127 +350,6 @@ public partial class SettingsWindow : Window
         }
 
         Close();
-    }
-
-    private bool SetStartupWithWindows(bool enable, bool showMessage = false)
-    {
-        if (IsRunningAsMsix())
-            return SetStartupWithWindowsMsix(enable, showMessage);
-        else
-            return SetStartupWithWindowsRegistry(enable, showMessage);
-    }
-
-    private const int APPMODEL_ERROR_NO_PACKAGE = 15700;
-
-    private static bool IsRunningAsMsix()
-    {
-        try
-        {
-            int length = 0;
-            int result = GetCurrentPackageFullName(ref length, null);
-            return result != APPMODEL_ERROR_NO_PACKAGE;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern int GetCurrentPackageFullName(ref int packageFullNameLength, char[]? packageFullName);
-
-    private bool SetStartupWithWindowsMsix(bool enable, bool showMessage)
-    {
-        try
-        {
-            var task = global::Windows.ApplicationModel.StartupTask.GetAsync("AutoPadStartup").GetAwaiter().GetResult();
-
-            if (enable)
-            {
-                var result = task.RequestEnableAsync().GetAwaiter().GetResult();
-                if (result == global::Windows.ApplicationModel.StartupTaskState.Enabled)
-                {
-                    if (showMessage)
-                        System.Windows.MessageBox.Show(Loc.MsgStartupRegistered, Loc.MsgSuccess, MessageBoxButton.OK, MessageBoxImage.Information);
-                    return true;
-                }
-                else if (result == global::Windows.ApplicationModel.StartupTaskState.DisabledByUser)
-                {
-                    System.Windows.MessageBox.Show(Loc.MsgStartupDisabledByUser, Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return false;
-                }
-                return false;
-            }
-            else
-            {
-                task.Disable();
-                if (showMessage)
-                    System.Windows.MessageBox.Show(Loc.MsgStartupUnregistered, Loc.MsgSuccess, MessageBoxButton.OK, MessageBoxImage.Information);
-                return true;
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Windows.MessageBox.Show(Loc.MsgStartupError(ex.Message), Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Error);
-            return false;
-        }
-    }
-
-    private bool SetStartupWithWindowsRegistry(bool enable, bool showMessage = false)
-    {
-        try
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryKey, true);
-            if (key == null)
-            {
-                System.Windows.MessageBox.Show(Loc.MsgRegistryFailed, Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Error);
-                return false;
-            }
-
-            if (enable)
-            {
-                var exePath = Process.GetCurrentProcess().MainModule?.FileName;
-                if (string.IsNullOrEmpty(exePath))
-                {
-                    System.Windows.MessageBox.Show(Loc.MsgExePathFailed, Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Error);
-                    return false;
-                }
-
-                // dotnet run으로 실행 중인 경우 dll 경로가 올 수 있음
-                if (exePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-                {
-                    // dll 대신 dotnet 명령어로 실행하도록 설정
-                    key.SetValue(AppName, $"dotnet \"{exePath}\"");
-                }
-                else
-                {
-                    key.SetValue(AppName, $"\"{exePath}\"");
-                }
-                
-                // 등록 확인
-                var registered = key.GetValue(AppName);
-                if (registered != null)
-                {
-                    if (showMessage)
-                        System.Windows.MessageBox.Show(Loc.MsgStartupRegistered, Loc.MsgSuccess, MessageBoxButton.OK, MessageBoxImage.Information);
-                    return true;
-                }
-            }
-            else
-            {
-                key.DeleteValue(AppName, false);
-                if (showMessage)
-                    System.Windows.MessageBox.Show(Loc.MsgStartupUnregistered, Loc.MsgSuccess, MessageBoxButton.OK, MessageBoxImage.Information);
-                return true;
-            }
-            
-            return true;
-        }
-        catch (Exception ex)
-        {
-            System.Windows.MessageBox.Show(Loc.MsgStartupError(ex.Message), Loc.MsgError, MessageBoxButton.OK, MessageBoxImage.Error);
-            return false;
-        }
     }
 
     private void PositionComboBox_PreviewMouseDown(object sender, MouseButtonEventArgs e)
